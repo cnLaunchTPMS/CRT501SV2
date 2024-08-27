@@ -33,13 +33,15 @@ android {
 publishing {
     publications {
         release(MavenPublication) {
-
             groupId = 'com.github.SwaggyBorn'
             artifactId = 'Crt501sV2Util'
             version = '1.0.0'
+
+            artifact("$buildDir/outputs/aar/${project.name}-release.aar")
         }
     }
 }
+
 
 
 dependencies {
