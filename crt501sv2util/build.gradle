@@ -34,7 +34,6 @@ publishing {
     publications {
         release(MavenPublication) {
 
-
             groupId = 'com.github.SwaggyBorn'
             artifactId = 'Crt501sV2Util'
             version = '1.0.0'
