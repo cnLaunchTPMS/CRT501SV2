@@ -74,10 +74,10 @@ class LaunchUtil constructor(context: Context) {
 
   //通用回调
   open class LaunchCallback {
-    fun onStart() {}
-    fun onEnd(data: Any?) {}
-    fun onBooleanValue(isBoolean: Boolean) {}
-    fun onFloatValue(value: Float) {}
+    open fun onStart() {}
+    open fun onEnd(data: Any?) {}
+    open fun onBooleanValue(isBoolean: Boolean) {}
+    open fun onFloatValue(value: Float) {}
   }
 
   private inner class ObdCheckRunnable(private val callbackInner: LaunchCallback?) : Runnable {
