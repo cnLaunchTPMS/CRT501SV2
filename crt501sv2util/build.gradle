@@ -36,9 +36,13 @@ publishing {
             groupId = 'com.github.SwaggyBorn'
             artifactId = 'Crt501sV2Util'
             version = '1.0.0'
-
             artifact("$buildDir/outputs/aar/${project.name}-release.aar")
         }
+    }
+
+    // 添加任务依赖关系
+    tasks.named('publishReleasePublicationToMavenLocal') {
+        dependsOn tasks.named('bundleReleaseAar')
     }
 }
 
