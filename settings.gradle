@@ -12,8 +12,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "launchutil"
 
 include ':app'
 include ':crt501sv2util'
-

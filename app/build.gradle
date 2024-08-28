@@ -35,5 +35,5 @@ android {
 dependencies {
 
 
-implementation project(path: ':crt501sv2util')
+    implementation project(path: ':crt501sv2util')
 }
