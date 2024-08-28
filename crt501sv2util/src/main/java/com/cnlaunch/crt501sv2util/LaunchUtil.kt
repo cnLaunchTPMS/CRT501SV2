@@ -17,7 +17,7 @@ import java.lang.Thread.sleep
  * @author BornVon
  * @date 2024-08-11
  */
-class LaunchUtil private constructor(context: Context) {
+class LaunchUtil constructor(context: Context) {
   
   private companion object{
     private const val TAG = "LaunchUtil"
