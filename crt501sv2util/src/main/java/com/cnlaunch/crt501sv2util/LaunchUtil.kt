@@ -19,7 +19,7 @@ import java.lang.Thread.sleep
  */
 class LaunchUtil private constructor(context: Context) {
   
-  companion object{
+  private companion object{
     private const val TAG = "LaunchUtil"
     private const val MAIN_APP_PROCESS_NAME = "com.cnlaunch.x431.crp429"
     private const val MAIN_APP_PROCESS_SERVICE_NAME = "com.cnlaunch.diagnoseservice"
@@ -52,9 +52,10 @@ class LaunchUtil private constructor(context: Context) {
     //静态的实例变量
     @Volatile
     private var instance: LaunchUtil? = null
-    
+
     // 获取 LaunchUtil 的单例实例
-    fun getInstance(context: Context): LaunchUtil? {
+    @JvmStatic
+    fun getInstance(context: Context): LaunchUtil {
       if (instance == null) {
         synchronized(LaunchUtil::class.java) {
           if (instance == null) {
@@ -62,10 +63,14 @@ class LaunchUtil private constructor(context: Context) {
           }
         }
       }
-      return instance
+      if (instance == null){
+        throw RuntimeException(Exception("instance 为空"))
+      }
+
+      return instance!!
     }
   }
- 
+
 
   //通用回调
   abstract class LaunchCallback {
@@ -132,7 +137,7 @@ class LaunchUtil private constructor(context: Context) {
     //使用应用级别的 Context
     mContext = context.applicationContext
   }
-  
+
   
 
   /**
