@@ -73,7 +73,7 @@ class LaunchUtil constructor(context: Context) {
 
 
   //通用回调
-  abstract class LaunchCallback {
+  open class LaunchCallback {
     fun onStart() {}
     fun onEnd(data: Any?) {}
     fun onBooleanValue(isBoolean: Boolean) {}
