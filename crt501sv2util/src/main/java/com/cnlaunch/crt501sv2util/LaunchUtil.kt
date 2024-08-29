@@ -36,7 +36,9 @@ import com.cnlaunch.crt501sv2util.bean.LanguageEnum
 import com.cnlaunch.crt501sv2util.bean.TpmsDeviceInfoBean
 import com.cnlaunch.crt501sv2util.bean.TpmsInitBean
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -78,6 +80,7 @@ class LaunchUtil constructor(context: Context) {
     CoroutineScope(newSingleThreadContext(LaunchUtil::class.java.simpleName))
   }
 
+  private var obdJob: Job? = null
 
   //通用回调
   open class LaunchCallback {
@@ -229,34 +232,44 @@ class LaunchUtil constructor(context: Context) {
    */
   fun startListenObdState(launchCallback: LaunchCallback?) {
     Log.d(TAG, "开始监听OBD")
-    scopeInner.launch(Dispatchers.IO) {
-      var currentIsConnected = false
-      while (true) {
-        val voltageString = ComUtils.getObdVoltage()
-        val originVoltage = voltageString.toFloat() * 18 / 1024 + 1.7f
-        val voltage = originVoltage + (originVoltage - 8) * 0.15f
-        val isConnected = !TextUtils.isEmpty(voltageString) && originVoltage > 8
+    if (obdJob == null){
+      obdJob = scopeInner.launch(Dispatchers.IO) {
+        var currentIsConnected = false
+        while (true) {
+          val voltageString = ComUtils.getObdVoltage()
+          val originVoltage = voltageString.toFloat() * 18 / 1024 + 1.7f
+          val voltage = originVoltage + (originVoltage - 8) * 0.15f
+          val isConnected = !TextUtils.isEmpty(voltageString) && originVoltage > 8
 
-        if (isConnected) {
-          launchCallback?.onFloatValue(voltage)
-        }
+          if (isConnected) {
+            launchCallback?.onFloatValue(voltage)
+          }
 
-        if (currentIsConnected != isConnected) {
-          if (CommonConst.isDebug) {
-            Log.d(TAG, "OBD状态变化：$isConnected")
+          if (currentIsConnected != isConnected) {
+            if (CommonConst.isDebug) {
+              Log.d(TAG, "OBD状态变化：$isConnected")
+            }
+            currentIsConnected = isConnected
+            scopeInner.launch(Dispatchers.Main) {
+              launchCallback?.onBooleanValue(isConnected)
+              val intent = Intent(ACTION_OBD_CONNECTED)
+              intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NAME)
+              intent.putExtra(BUNDLE_EXTRA_DATA_KEY, isConnected)
+              mContext.sendBroadcast(intent)
+            }
           }
-          currentIsConnected = isConnected
-          scopeInner.launch(Dispatchers.Main) {
-            launchCallback?.onBooleanValue(isConnected)
-            val intent = Intent(ACTION_OBD_CONNECTED)
-            intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NAME)
-            intent.putExtra(BUNDLE_EXTRA_DATA_KEY, isConnected)
-            mContext.sendBroadcast(intent)
-          }
+          delay(2000L)
         }
-        delay(2000L)
       }
     }
+
+    if (obdJob?.isActive == true) {
+      scopeInner.launch {
+        obdJob?.start()
+      }
+    }
+
+
   }
 
   
@@ -268,7 +281,9 @@ class LaunchUtil constructor(context: Context) {
     if (CommonConst.isDebug) {
       Log.d(TAG, "停止监听OBD")
     }
-    scopeInner.cancel()
+
+    obdJob?.cancel()
+    obdJob = null
   }
 
   
@@ -277,6 +292,9 @@ class LaunchUtil constructor(context: Context) {
    * 清理缓存
    */
   fun clearCache() {
+    if (CommonConst.isDebug) {
+      Log.d(TAG, "清理缓存")
+    }
     val intent = Intent(ACTION_CLEAR_CACHE)
     intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NAME)
     mContext.sendBroadcast(intent)
@@ -288,6 +306,9 @@ class LaunchUtil constructor(context: Context) {
    * 释放元征相关app
    */
   fun releaseLaunchApp() {
+    if (CommonConst.isDebug) {
+      Log.d(TAG, "清理缓存")
+    }
     if (hasGotoLaunchApp) {
       ComUtils.killProcess(MAIN_APP_PROCESS_NAME)
       ComUtils.killProcess(MAIN_APP_PROCESS_SERVICE_NAME)
