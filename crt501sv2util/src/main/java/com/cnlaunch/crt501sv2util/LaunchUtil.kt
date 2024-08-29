@@ -150,7 +150,7 @@ class LaunchUtil constructor(context: Context) {
         intent.getStringExtra(BUNDLE_EXTRA_DATA_KEY)?.let {
           val json = JSONObject(it)
           val tpmsInitBean = TpmsInitBean(
-            json.getBoolean(KEY_INIT_RESULT),
+            json.getString(KEY_INIT_RESULT).toBoolean(),
             json.getString(KEY_INIT_MSG),
             TpmsDeviceInfoBean(
               json.getString(KEY_SERIAL_NO),
@@ -237,6 +237,10 @@ class LaunchUtil constructor(context: Context) {
         val voltage = originVoltage + (originVoltage - 8) * 0.15f
         val isConnected = !TextUtils.isEmpty(voltageString) && originVoltage > 8
 
+        if (isConnected) {
+          launchCallback?.onFloatValue(voltage)
+        }
+
         if (currentIsConnected != isConnected) {
           if (CommonConst.isDebug) {
             Log.d(TAG, "OBD状态变化：$isConnected")
@@ -248,9 +252,6 @@ class LaunchUtil constructor(context: Context) {
             intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NAME)
             intent.putExtra(BUNDLE_EXTRA_DATA_KEY, isConnected)
             mContext.sendBroadcast(intent)
-            if (isConnected) {
-              launchCallback?.onFloatValue(voltage)
-            }
           }
         }
         delay(2000L)
