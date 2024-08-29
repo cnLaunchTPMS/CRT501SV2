@@ -7,9 +7,44 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.text.TextUtils
 import android.util.Log
+import com.cnlaunch.crt501sv2util.CommonConst.ACTION_CLEAR_CACHE
+import com.cnlaunch.crt501sv2util.CommonConst.ACTION_OBD_CONNECTED
+import com.cnlaunch.crt501sv2util.CommonConst.ACTION_SEND_INIT_INFO
+import com.cnlaunch.crt501sv2util.CommonConst.ACTION_TPMS_INIT_RESULT
+import com.cnlaunch.crt501sv2util.CommonConst.BUNDLE_EXTRA_DATA_KEY
+import com.cnlaunch.crt501sv2util.CommonConst.CUST_COUNTRY
+import com.cnlaunch.crt501sv2util.CommonConst.CUST_LANG
+import com.cnlaunch.crt501sv2util.CommonConst.INIT_CONFIG
+import com.cnlaunch.crt501sv2util.CommonConst.KEY_BOOT_VERSION
+import com.cnlaunch.crt501sv2util.CommonConst.KEY_DIAGNOSE_ID
+import com.cnlaunch.crt501sv2util.CommonConst.KEY_DOWNLOAD_VERSION
+import com.cnlaunch.crt501sv2util.CommonConst.KEY_INIT_MSG
+import com.cnlaunch.crt501sv2util.CommonConst.KEY_INIT_RESULT
+import com.cnlaunch.crt501sv2util.CommonConst.KEY_OUTER_BEAN
+import com.cnlaunch.crt501sv2util.CommonConst.KEY_SERIAL_NO
+import com.cnlaunch.crt501sv2util.CommonConst.KEY_SERIAL_NO_TPMS
+import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_DIAG_ACTIVITY
+import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_PROCESS_NAME
+import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_PROCESS_SERVICE_NAME
+import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_RECEIVER_NAME
+import com.cnlaunch.crt501sv2util.CommonConst.TPMS_REGION
+import com.cnlaunch.crt501sv2util.CommonConst.VALUE_OBD_DIAG
+import com.cnlaunch.crt501sv2util.CommonConst.VALUE_RESET_DIAG
+import com.cnlaunch.crt501sv2util.CommonConst.VALUE_TPMS_DIAG
+import com.cnlaunch.crt501sv2util.bean.DiagTpmsBeanForOuter
+import com.cnlaunch.crt501sv2util.bean.LanguageEnum
+import com.cnlaunch.crt501sv2util.bean.TpmsDeviceInfoBean
+import com.cnlaunch.crt501sv2util.bean.TpmsInitBean
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.newSingleThreadContext
 import org.json.JSONException
 import org.json.JSONObject
 import java.lang.Thread.sleep
+import java.lang.ref.WeakReference
 
 /**
  * 元征工具类
@@ -19,35 +54,9 @@ import java.lang.Thread.sleep
  */
 class LaunchUtil constructor(context: Context) {
   
-  private companion object{
+  companion object{
     private const val TAG = "LaunchUtil"
-    private const val MAIN_APP_PROCESS_NAME = "com.cnlaunch.x431.crp429"
-    private const val MAIN_APP_PROCESS_SERVICE_NAME = "com.cnlaunch.diagnoseservice"
-    private const val MAIN_APP_DIAG_ACTIVITY = "com.cnlaunch.x431pro.activity.diagnose.DiagnoseActivity"
-    private const val MAIN_APP_RECEIVER_NAME = "com.gear.crp.MainBroadCast"
-    private const val BUNDLE_EXTRA_ACTION_KEY = "action"
-    private const val BUNDLE_EXTRA_FLAG_KEY = "flag"
-    private const val BUNDLE_EXTRA_DATA_KEY = "data"
-    private const val TPMS_REGION = "tpms_region"
-    private const val CUST_LANG = "cust_lang"
-    private const val CUST_COUNTRY = "cust_country"
-    private const val INIT_CONFIG = "init_config"
-    private const val KEY_DIAGNOSE_ID = "diagnose_id"
-    private const val KEY_OUTER_BEAN = "outerBeanString"
-    private const val VALUE_TPMS_DIAG = "tpms_diag"
-    private const val VALUE_OBD_DIAG = "obd"
-    private const val VALUE_RESET_DIAG = "reset"
-    private const val ACTION_SEND_INIT_INFO = "com.cnlaunch.x431.init_total"
-    private const val ACTION_CLEAR_CACHE = "com.cnlaunch.x431.clearcache"
-    private const val ACTION_DEVICE_INFO = "com.cnlaunch.x431.send_device_info"
-    private const val ACTION_OBD_CONNECTED = "com.cnlaunch.x431.set_flag_12v"
-    
-    
-    
-    private var obdCheckRunnable: ObdCheckRunnable? = null
-    private var obdCheckThread: Thread? = null
-    private val obdCheckLock = Any()
- 
+
 
     //静态的实例变量
     @Volatile
@@ -56,19 +65,17 @@ class LaunchUtil constructor(context: Context) {
     // 获取 LaunchUtil 的单例实例
     @JvmStatic
     fun getInstance(context: Context): LaunchUtil {
-      if (instance == null) {
-        synchronized(LaunchUtil::class.java) {
-          if (instance == null) {
-            instance = LaunchUtil(context)
-          }
-        }
+      return instance ?: synchronized(this) {
+        instance ?: LaunchUtil(context).also { instance = it }
       }
-      if (instance == null){
-        throw RuntimeException(Exception("instance 为空"))
-      }
-
-      return instance!!
     }
+  }
+
+
+
+  //线程不变的CoroutineScope
+  private val scopeInner by lazy {
+    CoroutineScope(newSingleThreadContext(LaunchUtil::class.java.simpleName))
   }
 
 
@@ -80,63 +87,19 @@ class LaunchUtil constructor(context: Context) {
     open fun onFloatValue(value: Float) {}
   }
 
-  private inner class ObdCheckRunnable(private val callbackInner: LaunchCallback?) : Runnable {
-    @Volatile
-    private var isRunning = true
-
-    @Volatile
-    private var currentIsConnected = false
-    fun switchRunning(isRun: Boolean) {
-      isRunning = isRun
-    }
-
-    override fun run() {
-      try {
-        while (isRunning) {
-          val voltageString = ComUtils.getObdVoltage()
-          val originVoltage = voltageString.toFloat() * 18 / 1024 + 1.7f
-          val voltage = originVoltage + (originVoltage - 8) * 0.15f
-          val isConnected = !TextUtils.isEmpty(voltageString) && originVoltage > 8
-          synchronized(this) {
-            if (currentIsConnected != isConnected) {
-              if (CommonConst.isDebug) {
-                Log.d(TAG, "OBD状态变化：$isConnected")
-              }
-              currentIsConnected = isConnected
-              callbackInner?.onBooleanValue(isConnected)
-              val intent = Intent(ACTION_OBD_CONNECTED)
-              intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NAME)
-              intent.putExtra(BUNDLE_EXTRA_DATA_KEY, isConnected)
-              contextByCheck.sendBroadcast(intent)
-            }
-            if (isConnected) {
-              callbackInner?.onFloatValue(voltage)
-            }
-          }
-          synchronized(this) { 
-            sleep(2000L)
-          }
-        }
-      } catch (e: Exception) {
-        if (CommonConst.isDebug) {
-          Log.e(TAG, "Obd连接检测异常: " + e.message)
-        }
-      }
-    }
-  }
 
   //是否进入过元征APP模块
   @Volatile
   private var hasGotoLaunchApp = false
 
-  //声明一个 Context 变量
-  private val mContext: Context?
 
-  //构造函数
-  init {
-    //使用应用级别的 Context
-    mContext = context.applicationContext
+  //声明一个 Context 变量
+  private val mContext: Context by lazy {
+    WeakReference<Context>(context.applicationContext).get()?:run {
+      throw IllegalStateException("Context is no longer available.")
+    }
   }
+
 
   
 
@@ -147,16 +110,6 @@ class LaunchUtil constructor(context: Context) {
   fun switchDebug(isDebug: Boolean) {
     CommonConst.isDebug = isDebug
   }
-
-  /**
-   * 安全性地获取内部context
-   */
-  private val contextByCheck: Context get() {
-      if (mContext == null) {
-        throw RuntimeException(Exception("context 为空"))
-      }
-      return mContext
-    }
 
   
   
@@ -178,21 +131,41 @@ class LaunchUtil constructor(context: Context) {
       initInfo.put(INIT_CONFIG, false)
       initInfo.put(TPMS_REGION, languageEnum.regionIndex)
       intent.putExtra(BUNDLE_EXTRA_DATA_KEY, initInfo.toString())
-      contextByCheck.sendBroadcast(intent)
+      mContext.sendBroadcast(intent)
     } catch (e: JSONException) {
       if (CommonConst.isDebug) {
-        Log.e(TAG, "初始化异常")
+        Log.e(TAG, "初始化异常:" + e.message)
       }
     }
     callback?.onStart()
     val initFilter = IntentFilter()
-    initFilter.addAction(ACTION_DEVICE_INFO)
-    contextByCheck.registerReceiver(object : BroadcastReceiver() {
+    initFilter.addAction(ACTION_TPMS_INIT_RESULT)
+    mContext.registerReceiver(object : BroadcastReceiver() {
       override fun onReceive(context: Context, intent: Intent) {
-        if (ACTION_DEVICE_INFO == intent.action) {
-          contextByCheck.unregisterReceiver(this)
+        if (ACTION_TPMS_INIT_RESULT == intent.action) {
+          mContext.unregisterReceiver(this)
         }
-        callback?.onEnd(intent.getStringExtra(BUNDLE_EXTRA_DATA_KEY))
+
+
+        intent.getStringExtra(BUNDLE_EXTRA_DATA_KEY)?.let {
+          val json = JSONObject(it)
+          val tpmsInitBean = TpmsInitBean(
+            json.getBoolean(KEY_INIT_RESULT),
+            json.getString(KEY_INIT_MSG),
+            TpmsDeviceInfoBean(
+              json.getString(KEY_SERIAL_NO),
+              json.getString(KEY_SERIAL_NO_TPMS),
+              json.getString(KEY_BOOT_VERSION),
+              json.getString(KEY_DOWNLOAD_VERSION),
+            )
+          )
+
+
+          callback?.onEnd(tpmsInitBean)
+        } ?: kotlin.run {
+          throw RuntimeException(Exception("数据回调为空"))
+        }
+
       }
     }, initFilter)
   }
@@ -213,7 +186,7 @@ class LaunchUtil constructor(context: Context) {
     intent.putExtra(KEY_DIAGNOSE_ID, VALUE_TPMS_DIAG)
     intent.putExtra(KEY_OUTER_BEAN, beanForOuter.transmitString)
     intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_DIAG_ACTIVITY)
-    contextByCheck.startActivity(intent)
+    mContext.startActivity(intent)
     hasGotoLaunchApp = true
   }
 
@@ -229,7 +202,7 @@ class LaunchUtil constructor(context: Context) {
     val intent = Intent()
     intent.putExtra(KEY_DIAGNOSE_ID, VALUE_OBD_DIAG)
     intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_DIAG_ACTIVITY)
-    contextByCheck.startActivity(intent)
+    mContext.startActivity(intent)
     hasGotoLaunchApp = true
   }
 
@@ -245,7 +218,7 @@ class LaunchUtil constructor(context: Context) {
     val intent = Intent()
     intent.putExtra(KEY_DIAGNOSE_ID, VALUE_RESET_DIAG)
     intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_DIAG_ACTIVITY)
-    contextByCheck.startActivity(intent)
+    mContext.startActivity(intent)
     hasGotoLaunchApp = true
   }
 
@@ -256,13 +229,31 @@ class LaunchUtil constructor(context: Context) {
    */
   fun startListenObdState(launchCallback: LaunchCallback?) {
     Log.d(TAG, "开始监听OBD")
-    synchronized(obdCheckLock) {
-      if (obdCheckRunnable == null) {
-        obdCheckRunnable = ObdCheckRunnable(launchCallback)
-      }
-      if (obdCheckThread == null) {
-        obdCheckThread = Thread(obdCheckRunnable)
-        obdCheckThread!!.start()
+    scopeInner.launch(Dispatchers.IO) {
+      var currentIsConnected = false
+      while (true) {
+        val voltageString = ComUtils.getObdVoltage()
+        val originVoltage = voltageString.toFloat() * 18 / 1024 + 1.7f
+        val voltage = originVoltage + (originVoltage - 8) * 0.15f
+        val isConnected = !TextUtils.isEmpty(voltageString) && originVoltage > 8
+
+        if (currentIsConnected != isConnected) {
+          if (CommonConst.isDebug) {
+            Log.d(TAG, "OBD状态变化：$isConnected")
+          }
+          currentIsConnected = isConnected
+          scopeInner.launch(Dispatchers.Main) {
+            launchCallback?.onBooleanValue(isConnected)
+            val intent = Intent(ACTION_OBD_CONNECTED)
+            intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NAME)
+            intent.putExtra(BUNDLE_EXTRA_DATA_KEY, isConnected)
+            mContext.sendBroadcast(intent)
+            if (isConnected) {
+              launchCallback?.onFloatValue(voltage)
+            }
+          }
+        }
+        delay(2000L)
       }
     }
   }
@@ -276,16 +267,7 @@ class LaunchUtil constructor(context: Context) {
     if (CommonConst.isDebug) {
       Log.d(TAG, "停止监听OBD")
     }
-    synchronized(obdCheckLock) {
-      if (obdCheckRunnable != null) {
-        obdCheckRunnable!!.switchRunning(false)
-        obdCheckRunnable = null
-      }
-      if (obdCheckThread != null) {
-        obdCheckThread!!.interrupt()
-        obdCheckThread = null
-      }
-    }
+    scopeInner.cancel()
   }
 
   
@@ -296,7 +278,7 @@ class LaunchUtil constructor(context: Context) {
   fun clearCache() {
     val intent = Intent(ACTION_CLEAR_CACHE)
     intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NAME)
-    contextByCheck.sendBroadcast(intent)
+    mContext.sendBroadcast(intent)
   }
 
   
