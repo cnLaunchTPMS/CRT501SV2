@@ -10,6 +10,12 @@ public class DiagTpmsBeanForOuter implements Serializable {
         FOUR,FIVE,SIX
     }
 
+    public enum TpmsFunctionEnum {
+        OBD_LEARN, READ_ECU_ID,CLEAR_FAULT_CODE,READ_FAULT_CODE;
+
+    }
+
+    private TpmsFunctionEnum functionEnum;
 
     //诊断协议
     String diagEntry;
@@ -60,6 +66,14 @@ public class DiagTpmsBeanForOuter implements Serializable {
         this.diagEntry = diagEntry;
     }
 
+
+    public TpmsFunctionEnum getFunctionEnum() {
+        return functionEnum;
+    }
+
+    public void setFunctionEnum(TpmsFunctionEnum functionEnum) {
+        this.functionEnum = functionEnum;
+    }
 
     public WheelNum getWheelNum() {
         return wheelNum;
@@ -174,6 +188,17 @@ public class DiagTpmsBeanForOuter implements Serializable {
                 .append(getDiagEntry())
                 .append("\n");
 
+
+        transBuilder.append("FUNCTION_TYPE=");
+        switch (functionEnum){
+            case OBD_LEARN:transBuilder.append(0).append("\n");break;
+            case READ_ECU_ID:transBuilder.append(1).append("\n");break;
+            case CLEAR_FAULT_CODE:transBuilder.append(2).append("\n");break;
+            case READ_FAULT_CODE:transBuilder.append(3).append("\n");break;
+            default:transBuilder.append(0).append("\n");break;
+        }
+
+
         switch (wheelNum){
 
             case FOUR:
@@ -182,7 +207,7 @@ public class DiagTpmsBeanForOuter implements Serializable {
                 transBuilder.append("FL=").append(getFl()).append("\n");
                 transBuilder.append("FR=").append(getFr()).append("\n");
                 transBuilder.append("RR=").append(getRr()).append("\n");
-                transBuilder.append("RL=").append(getRl());
+                transBuilder.append("RL=").append(getRl()).append("\n");
                 break;
 
             case FIVE:
@@ -192,7 +217,7 @@ public class DiagTpmsBeanForOuter implements Serializable {
                 transBuilder.append("FR=").append(getFr()).append("\n");
                 transBuilder.append("RR=").append(getRr()).append("\n");
                 transBuilder.append("RL=").append(getRl()).append("\n");
-                transBuilder.append("SP=").append(getRl());
+                transBuilder.append("SP=").append(getRl()).append("\n");
                 break;
 
 
@@ -205,13 +230,11 @@ public class DiagTpmsBeanForOuter implements Serializable {
                 transBuilder.append("RR_OUTER").append(getRrOuter()).append("\n");
                 transBuilder.append("RR_INNER").append(getRrInner()).append("\n");
                 transBuilder.append("RL_OUTER").append(getRlOuter()).append("\n");
-                transBuilder.append("RL_INNER").append(getRlInner());
+                transBuilder.append("RL_INNER").append(getRlInner()).append("\n");
                 break;
 
             default:checkIsNullOrEmpty("");
         }
-
-
 
 
         return transBuilder.toString();
@@ -221,7 +244,8 @@ public class DiagTpmsBeanForOuter implements Serializable {
     @Override
     public String toString() {
         return "DiagTpmsBeanForOuter{" +
-                "diagEntry='" + diagEntry + '\'' +
+                "functionEnum=" + functionEnum +
+                ", diagEntry='" + diagEntry + '\'' +
                 ", wheelNum=" + wheelNum +
                 ", idLen=" + idLen +
                 ", fl='" + fl + '\'' +

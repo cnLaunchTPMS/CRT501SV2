@@ -16,6 +16,7 @@ internal object CommonConst {
   const val CUST_COUNTRY = "cust_country"
   const val INIT_CONFIG = "init_config"
   const val KEY_DIAGNOSE_ID = "diagnose_id"
+  const val KEY_DIAGNOSE_TYPE = "diagnose_type"
   const val KEY_OUTER_BEAN = "outerBeanString"
   const val VALUE_TPMS_DIAG = "tpms_diag"
   const val VALUE_OBD_DIAG = "obd"

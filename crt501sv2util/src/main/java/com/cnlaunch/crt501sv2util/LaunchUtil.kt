@@ -17,6 +17,7 @@ import com.cnlaunch.crt501sv2util.CommonConst.CUST_LANG
 import com.cnlaunch.crt501sv2util.CommonConst.INIT_CONFIG
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_BOOT_VERSION
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_DIAGNOSE_ID
+import com.cnlaunch.crt501sv2util.CommonConst.KEY_DIAGNOSE_TYPE
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_DOWNLOAD_VERSION
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_INIT_MSG
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_INIT_RESULT
@@ -34,18 +35,16 @@ import com.cnlaunch.crt501sv2util.CommonConst.VALUE_TPMS_DIAG
 import com.cnlaunch.crt501sv2util.bean.DiagTpmsBeanForOuter
 import com.cnlaunch.crt501sv2util.bean.LanguageEnum
 import com.cnlaunch.crt501sv2util.bean.TpmsDeviceInfoBean
+import com.cnlaunch.crt501sv2util.bean.TpmsFunctionEnum
 import com.cnlaunch.crt501sv2util.bean.TpmsInitBean
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
 import org.json.JSONException
 import org.json.JSONObject
-import java.lang.Thread.sleep
 import java.lang.ref.WeakReference
 
 /**
@@ -173,15 +172,16 @@ class LaunchUtil constructor(context: Context) {
     }, initFilter)
   }
 
-  
-  
+
   /**
    * 跳转OBD学习页面
    * @param beanForOuter 跳转用数据bean
    * @throws Exception 异常
    */
   @Throws(Exception::class)
-  fun gotoObdLearn(beanForOuter: DiagTpmsBeanForOuter) {
+  fun gotoMixFunction(
+    beanForOuter: DiagTpmsBeanForOuter
+  ) {
     if (CommonConst.isDebug) {
       Log.d(TAG, "跳转OBD学习")
     }
