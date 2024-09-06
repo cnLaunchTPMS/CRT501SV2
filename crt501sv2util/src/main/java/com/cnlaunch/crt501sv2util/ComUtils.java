@@ -37,6 +37,10 @@ class ComUtils {
         return command(new String[]{COMMAND_READ_OBD_VOLTAGE});
     }
 
+    protected static void gotoFactory(){
+        ComUtils.command(new String[]{"am start -n com.cnlaunch.crpguard/com.cnlaunch.crpguard.factory.activity.factory.FATNewFactoryActivity"});
+    }
+
     private static String command(String[] commands) {
         String line;
 

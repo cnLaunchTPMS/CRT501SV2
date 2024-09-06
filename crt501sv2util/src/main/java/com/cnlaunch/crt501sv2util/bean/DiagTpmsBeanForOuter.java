@@ -55,6 +55,8 @@ public class DiagTpmsBeanForOuter implements Serializable {
     //六轮车 左后内胎 id
     String rlInner;
 
+    String specialDescFormOuter;
+
 
 
     public String getDiagEntry() throws Exception {
@@ -173,6 +175,14 @@ public class DiagTpmsBeanForOuter implements Serializable {
         this.rlInner = rlInner;
     }
 
+    public String getSpecialDescFormOuter() {
+        return specialDescFormOuter;
+    }
+
+    public void setSpecialDescFormOuter(String specialDescFormOuter) {
+        this.specialDescFormOuter = specialDescFormOuter;
+    }
+
     private void checkIsNullOrEmpty(String data) throws Exception {
         if (TextUtils.isEmpty(data)){
             throw new Exception("数据不能为空");
@@ -257,6 +267,7 @@ public class DiagTpmsBeanForOuter implements Serializable {
                 ", rrInner='" + rrInner + '\'' +
                 ", rlOuter='" + rlOuter + '\'' +
                 ", rlInner='" + rlInner + '\'' +
+                ", specialDescFormOuter='" + specialDescFormOuter + '\'' +
                 '}';
     }
 }

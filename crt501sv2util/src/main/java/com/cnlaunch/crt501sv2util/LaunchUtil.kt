@@ -17,11 +17,11 @@ import com.cnlaunch.crt501sv2util.CommonConst.CUST_LANG
 import com.cnlaunch.crt501sv2util.CommonConst.INIT_CONFIG
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_BOOT_VERSION
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_DIAGNOSE_ID
-import com.cnlaunch.crt501sv2util.CommonConst.KEY_DIAGNOSE_TYPE
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_DOWNLOAD_VERSION
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_INIT_MSG
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_INIT_RESULT
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_OUTER_BEAN
+import com.cnlaunch.crt501sv2util.CommonConst.KEY_OUTER_SPECIAL_TEXT
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_SERIAL_NO
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_SERIAL_NO_TPMS
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_DIAG_ACTIVITY
@@ -35,7 +35,6 @@ import com.cnlaunch.crt501sv2util.CommonConst.VALUE_TPMS_DIAG
 import com.cnlaunch.crt501sv2util.bean.DiagTpmsBeanForOuter
 import com.cnlaunch.crt501sv2util.bean.LanguageEnum
 import com.cnlaunch.crt501sv2util.bean.TpmsDeviceInfoBean
-import com.cnlaunch.crt501sv2util.bean.TpmsFunctionEnum
 import com.cnlaunch.crt501sv2util.bean.TpmsInitBean
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -183,11 +182,12 @@ class LaunchUtil constructor(context: Context) {
     beanForOuter: DiagTpmsBeanForOuter
   ) {
     if (CommonConst.isDebug) {
-      Log.d(TAG, "跳转OBD学习")
+      Log.d(TAG, "跳转TPMS综合功能")
     }
     val intent = Intent()
     intent.putExtra(KEY_DIAGNOSE_ID, VALUE_TPMS_DIAG)
     intent.putExtra(KEY_OUTER_BEAN, beanForOuter.transmitString)
+    intent.putExtra(KEY_OUTER_SPECIAL_TEXT,beanForOuter.specialDescFormOuter)
     intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_DIAG_ACTIVITY)
     mContext.startActivity(intent)
     hasGotoLaunchApp = true
@@ -268,9 +268,10 @@ class LaunchUtil constructor(context: Context) {
         obdJob?.start()
       }
     }
-
-
   }
+
+
+
 
   
   
@@ -300,8 +301,18 @@ class LaunchUtil constructor(context: Context) {
     mContext.sendBroadcast(intent)
   }
 
-  
-  
+
+  /**
+   * 跳转到工厂测试
+   */
+  fun gotoLaunchFactoryTest(){
+    if (CommonConst.isDebug) {
+      Log.d(TAG, "跳转工厂测试")
+    }
+    ComUtils.gotoFactory()
+  }
+
+
   /**
    * 释放元征相关app
    */
