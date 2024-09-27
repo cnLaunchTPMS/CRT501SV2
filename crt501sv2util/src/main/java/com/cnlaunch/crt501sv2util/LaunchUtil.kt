@@ -237,11 +237,11 @@ class LaunchUtil constructor(context: Context) {
         var currentIsConnected = false
         while (true) {
           val voltageString = ComUtils.getObdVoltage()
-          val originVoltage = voltageString.toFloat() * 18 / 1024 + 1.7f
-          val voltage = originVoltage + (originVoltage - 8) * 0.15f
-          val isConnected = !TextUtils.isEmpty(voltageString) && originVoltage > 8
-
-          if (isConnected) {
+          var isConnected = false
+          if (!TextUtils.isEmpty(voltageString)){
+            val originVoltage = voltageString.toFloat() * 18 / 1024 + 1.7f
+            val voltage = originVoltage + (originVoltage - 8) * 0.15f
+            isConnected = !TextUtils.isEmpty(voltageString) && originVoltage > 8
             launchCallback?.onFloatValue(voltage)
           }
 
