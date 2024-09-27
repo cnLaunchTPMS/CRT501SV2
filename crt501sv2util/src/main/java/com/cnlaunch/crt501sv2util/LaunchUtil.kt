@@ -241,7 +241,7 @@ class LaunchUtil constructor(context: Context) {
           if (!TextUtils.isEmpty(voltageString)){
             val originVoltage = voltageString.toFloat() * 18 / 1024 + 1.7f
             val voltage = originVoltage + (originVoltage - 8) * 0.15f
-            isConnected = !TextUtils.isEmpty(voltageString) && originVoltage > 8
+            isConnected = originVoltage > 8
             launchCallback?.onFloatValue(voltage)
           }
 
@@ -318,7 +318,7 @@ class LaunchUtil constructor(context: Context) {
    */
   fun releaseLaunchApp() {
     if (CommonConst.isDebug) {
-      Log.d(TAG, "清理缓存")
+      Log.d(TAG, "释放元征APP")
     }
     if (hasGotoLaunchApp) {
       ComUtils.killProcess(MAIN_APP_PROCESS_NAME)
