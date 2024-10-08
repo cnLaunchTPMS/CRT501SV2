@@ -8,6 +8,7 @@ internal object CommonConst {
   const val MAIN_APP_PROCESS_SERVICE_NAME = "com.cnlaunch.diagnoseservice"
   const val MAIN_APP_DIAG_ACTIVITY = "com.cnlaunch.x431pro.activity.diagnose.DiagnoseActivity"
   const val MAIN_APP_RECEIVER_NAME = "com.gear.crp.MainBroadCast"
+  const val MAIN_APP_AIDL_SERVICE = "com.cnlaunch.outer.AidlForOuterServerService"
   const val BUNDLE_EXTRA_ACTION_KEY = "action"
   const val BUNDLE_EXTRA_FLAG_KEY = "flag"
   const val BUNDLE_EXTRA_DATA_KEY = "data"

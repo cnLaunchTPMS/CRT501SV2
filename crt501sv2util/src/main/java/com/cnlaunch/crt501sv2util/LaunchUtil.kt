@@ -5,6 +5,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.ServiceConnection
+import android.os.IBinder
 import android.text.TextUtils
 import android.util.Log
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_CLEAR_CACHE
@@ -24,6 +26,7 @@ import com.cnlaunch.crt501sv2util.CommonConst.KEY_OUTER_BEAN
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_OUTER_SPECIAL_TEXT
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_SERIAL_NO
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_SERIAL_NO_TPMS
+import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_AIDL_SERVICE
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_DIAG_ACTIVITY
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_PROCESS_NAME
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_PROCESS_SERVICE_NAME
@@ -36,6 +39,8 @@ import com.cnlaunch.crt501sv2util.bean.DiagTpmsBeanForOuter
 import com.cnlaunch.crt501sv2util.bean.LanguageEnum
 import com.cnlaunch.crt501sv2util.bean.TpmsDeviceInfoBean
 import com.cnlaunch.crt501sv2util.bean.TpmsInitBean
+import com.cnlaunch.outer.IAidlForOuter
+import com.cnlaunch.outer.IAidlForOuterCallback
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -86,6 +91,10 @@ class LaunchUtil constructor(context: Context) {
     open fun onEnd(data: Any?) {}
     open fun onBooleanValue(isBoolean: Boolean) {}
     open fun onFloatValue(value: Float) {}
+    open fun onJsonValue(jsonObject: JSONObject) {}
+    open fun onBooleanFunValue(functionOthers: (Boolean) -> Unit) {}
+    open fun onError(value: String) {}
+
   }
 
 
@@ -173,13 +182,13 @@ class LaunchUtil constructor(context: Context) {
 
 
   /**
-   * 跳转OBD学习页面
+   * 跳转TPMS综合功能
    * @param beanForOuter 跳转用数据bean
    * @throws Exception 异常
    */
   @Throws(Exception::class)
   fun gotoMixFunction(
-    beanForOuter: DiagTpmsBeanForOuter
+    beanForOuter: DiagTpmsBeanForOuter,
   ) {
     if (CommonConst.isDebug) {
       Log.d(TAG, "跳转TPMS综合功能")
@@ -189,7 +198,75 @@ class LaunchUtil constructor(context: Context) {
     intent.putExtra(KEY_OUTER_BEAN, beanForOuter.transmitString)
     intent.putExtra(KEY_OUTER_SPECIAL_TEXT,beanForOuter.specialDescFormOuter)
     intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_DIAG_ACTIVITY)
-    mContext.startActivity(intent)
+    hasGotoLaunchApp = true
+  }
+
+
+
+  /**
+   * 跳转OBD学习（带回调）页面
+   * @param beanForOuter 跳转用数据bean
+   * @param callback 高频学习回调
+   * @throws Exception 异常
+   */
+  fun gotoObdLearn(
+    beanForOuter: DiagTpmsBeanForOuter,
+    highFrequencyCallback: LaunchCallback?
+  ){
+    if (CommonConst.isDebug) {
+      Log.d(TAG, "跳转OBD学习")
+    }
+    val intent = Intent()
+    intent.putExtra(KEY_DIAGNOSE_ID, VALUE_TPMS_DIAG)
+    beanForOuter.functionEnum = DiagTpmsBeanForOuter.TpmsFunctionEnum.OBD_LEARN
+    intent.putExtra(KEY_OUTER_BEAN, beanForOuter.transmitString)
+    intent.putExtra(KEY_OUTER_SPECIAL_TEXT,beanForOuter.specialDescFormOuter)
+    intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_DIAG_ACTIVITY)
+
+    //绑定AIDL服务
+    mContext.bindService(
+      Intent().setComponent(ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_AIDL_SERVICE)),
+      object : ServiceConnection {
+        override fun onServiceConnected(componentName: ComponentName, iBinder: IBinder) {
+          val aidlService = IAidlForOuter.Stub.asInterface(iBinder)
+          aidlService.registerCallback(object : IAidlForOuterCallback.Stub() {
+
+
+            override fun getTag(): String {
+              return "client"
+            }
+
+            override fun onOBDLearnData(tireCount: Int, tireIndex: Int) {
+
+              if (tireCount < 0){
+                highFrequencyCallback?.onError("-1")
+              }
+
+              highFrequencyCallback?.onJsonValue(JSONObject().apply {
+                put("tireCount",tireCount)
+                put("tireIndex",tireIndex)
+              })
+            }
+            override fun onOBDLearnResult(isSuccess: Boolean) {}
+          })
+
+
+          //给外部暴露回调代理
+          highFrequencyCallback?.onBooleanFunValue {
+            aidlService.sendOBDLearnResult(it)
+          }
+
+          mContext.startActivity(intent)
+        }
+
+        override fun onServiceDisconnected(componentName: ComponentName) {
+          highFrequencyCallback?.onError("服务断连")
+        }
+      },
+      Context.BIND_AUTO_CREATE
+    )
+
+
     hasGotoLaunchApp = true
   }
 
