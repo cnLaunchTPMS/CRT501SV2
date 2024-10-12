@@ -157,23 +157,24 @@ class LaunchUtil constructor(context: Context) {
         }
 
 
+        val tpmsInitBean = TpmsInitBean(
+          intent.getBooleanExtra(KEY_INIT_RESULT,false),
+          intent.getStringExtra(KEY_INIT_MSG) ?: "",
+          TpmsDeviceInfoBean()
+        )
+
         intent.getStringExtra(BUNDLE_EXTRA_DATA_KEY)?.let {
           val json = JSONObject(it)
-          val tpmsInitBean = TpmsInitBean(
-            json.getString(KEY_INIT_RESULT).toBoolean(),
-            json.getString(KEY_INIT_MSG),
-            TpmsDeviceInfoBean(
-              json.getString(KEY_SERIAL_NO),
-              json.getString(KEY_SERIAL_NO_TPMS),
-              json.getString(KEY_BOOT_VERSION),
-              json.getString(KEY_DOWNLOAD_VERSION),
-            )
+          tpmsInitBean.deviceInfoBean = TpmsDeviceInfoBean(
+            json.getString(KEY_SERIAL_NO),
+            json.getString(KEY_SERIAL_NO_TPMS),
+            json.getString(KEY_BOOT_VERSION),
+            json.getString(KEY_DOWNLOAD_VERSION),
           )
-
-
           callback?.onEnd(tpmsInitBean)
         } ?: kotlin.run {
-          throw RuntimeException(Exception("数据回调为空"))
+          tpmsInitBean.result = false
+          callback?.onEnd(tpmsInitBean)
         }
 
       }
