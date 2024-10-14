@@ -9,6 +9,7 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.text.TextUtils
 import android.util.Log
+import com.cnlaunch.crt501sv2util.ComUtils.getTpmsPointState
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_CLEAR_CACHE
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_OBD_CONNECTED
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_SEND_INIT_INFO
@@ -349,8 +350,6 @@ class LaunchUtil constructor(context: Context) {
   }
 
 
-
-
   
   
   /**
@@ -365,6 +364,25 @@ class LaunchUtil constructor(context: Context) {
     obdJob = null
   }
 
+
+  /**
+   * 开关USB供电
+   * @param callBack 回调
+   */
+  fun switchUSBPower(
+    isOpen: Boolean,
+    callBack: (Boolean) -> Unit = {}
+  ) {
+    if (CommonConst.isDebug) {
+      Log.d(TAG, "执行USB供电 ：$isOpen")
+    }
+
+    scopeInner.launch {
+      ComUtils.powerUSB(isOpen)
+      delay(500)
+      callBack.invoke(getTpmsPointState() == isOpen)
+    }
+  }
   
   
   /**

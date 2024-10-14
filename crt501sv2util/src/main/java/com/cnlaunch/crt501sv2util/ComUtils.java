@@ -1,5 +1,6 @@
 package com.cnlaunch.crt501sv2util;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -40,6 +41,21 @@ class ComUtils {
     protected static void gotoFactory(){
         ComUtils.command(new String[]{"am start -n com.cnlaunch.crpguard/com.cnlaunch.crpguard.factory.activity.factory.FATNewFactoryActivity"});
     }
+
+    protected static void powerUSB(boolean isOpen){
+        ComUtils.command(new String[]{"echo" + " " + (isOpen ? 1 : 0) + " > " + "sys/devices/bsk_misc/bsk_tpms_power"});
+    }
+
+    //查看tpms 系统节点上电情况
+    protected static Boolean getTpmsPointState() {
+        String flag =  command(new String[]{"cat sys/devices/bsk_misc/bsk_tpms_power"}) ;
+        if (!TextUtils.isEmpty(flag)) {
+            return flag.trim().equals("1");
+        } else {
+            return false;
+        }
+    }
+
 
     private static String command(String[] commands) {
         String line;
