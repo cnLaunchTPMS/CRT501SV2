@@ -48,7 +48,7 @@ class ComUtils {
 
     //查看tpms 系统节点上电情况
     protected static Boolean getTpmsPointState() {
-        String flag =  command(new String[]{"cat sys/devices/bsk_misc/bsk_tpms_power"}) ;
+        String flag = command(new String[]{"cat sys/devices/bsk_misc/bsk_tpms_power"}) ;
         if (!TextUtils.isEmpty(flag)) {
             return flag.trim().equals("1");
         } else {

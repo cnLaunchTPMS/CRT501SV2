@@ -12,6 +12,7 @@ import android.util.Log
 import com.cnlaunch.crt501sv2util.ComUtils.getTpmsPointState
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_CLEAR_CACHE
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_OBD_CONNECTED
+import com.cnlaunch.crt501sv2util.CommonConst.ACTION_REFRESH_CAR_FILE
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_SEND_INIT_INFO
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_TPMS_INIT_RESULT
 import com.cnlaunch.crt501sv2util.CommonConst.BUNDLE_EXTRA_DATA_KEY
@@ -32,6 +33,7 @@ import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_DIAG_ACTIVITY
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_PROCESS_NAME
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_PROCESS_SERVICE_NAME
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_RECEIVER_NAME
+import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_RECEIVER_NEW_NAME
 import com.cnlaunch.crt501sv2util.CommonConst.TPMS_REGION
 import com.cnlaunch.crt501sv2util.CommonConst.VALUE_OBD_DIAG
 import com.cnlaunch.crt501sv2util.CommonConst.VALUE_RESET_DIAG
@@ -106,7 +108,7 @@ class LaunchUtil constructor(context: Context) {
 
   //声明一个 Context 变量
   private val mContext: Context by lazy {
-    WeakReference<Context>(context.applicationContext).get()?:run {
+    WeakReference<Context>(context).get()?:run {
       throw IllegalStateException("Context is no longer available.")
     }
   }
@@ -406,6 +408,21 @@ class LaunchUtil constructor(context: Context) {
       Log.d(TAG, "跳转工厂测试")
     }
     ComUtils.gotoFactory()
+  }
+
+
+  /**
+   * 刷新功能目录
+   */
+  fun refreshFunctionFile(){
+    if (CommonConst.isDebug) {
+      Log.d(TAG, "刷新功能文件")
+    }
+
+    mContext.sendBroadcast(Intent(ACTION_REFRESH_CAR_FILE).apply {
+      component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NEW_NAME)
+    })
+
   }
 
 
