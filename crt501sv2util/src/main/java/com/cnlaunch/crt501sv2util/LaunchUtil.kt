@@ -108,7 +108,7 @@ class LaunchUtil constructor(context: Context) {
 
   //声明一个 Context 变量
   private val mContext: Context by lazy {
-    WeakReference<Context>(context).get()?:run {
+    WeakReference<Context>(context.applicationContext).get()?:run {
       throw IllegalStateException("Context is no longer available.")
     }
   }
@@ -210,7 +210,7 @@ class LaunchUtil constructor(context: Context) {
   /**
    * 跳转OBD学习（带回调）页面
    * @param beanForOuter 跳转用数据bean
-   * @param callback 高频学习回调
+   * @param highFrequencyCallback 高频学习回调
    * @throws Exception 异常
    */
   fun gotoObdLearn(
@@ -221,6 +221,7 @@ class LaunchUtil constructor(context: Context) {
       Log.d(TAG, "跳转OBD学习")
     }
     val intent = Intent()
+    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
     intent.putExtra(KEY_DIAGNOSE_ID, VALUE_TPMS_DIAG)
     beanForOuter.functionEnum = DiagTpmsBeanForOuter.TpmsFunctionEnum.OBD_LEARN
     intent.putExtra(KEY_OUTER_BEAN, beanForOuter.transmitString)
@@ -284,6 +285,7 @@ class LaunchUtil constructor(context: Context) {
       Log.d(TAG, "跳转OBD诊断")
     }
     val intent = Intent()
+    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
     intent.putExtra(KEY_DIAGNOSE_ID, VALUE_OBD_DIAG)
     intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_DIAG_ACTIVITY)
     mContext.startActivity(intent)
@@ -300,6 +302,7 @@ class LaunchUtil constructor(context: Context) {
       Log.d(TAG, "跳转特殊功能")
     }
     val intent = Intent()
+    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
     intent.putExtra(KEY_DIAGNOSE_ID, VALUE_RESET_DIAG)
     intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_DIAG_ACTIVITY)
     mContext.startActivity(intent)
