@@ -122,6 +122,8 @@ class LaunchUtil constructor(context: Context) {
    */
   fun switchDebug(isDebug: Boolean) {
     CommonConst.isDebug = isDebug
+
+
   }
 
   
@@ -202,7 +204,9 @@ class LaunchUtil constructor(context: Context) {
     intent.putExtra(KEY_OUTER_BEAN, beanForOuter.transmitString)
     intent.putExtra(KEY_OUTER_SPECIAL_TEXT,beanForOuter.specialDescFormOuter)
     intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_DIAG_ACTIVITY)
+    mContext.startActivity(intent)
     hasGotoLaunchApp = true
+
   }
 
 
