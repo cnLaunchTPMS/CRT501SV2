@@ -4,7 +4,9 @@ internal object CommonConst {
 
   var isDebug = true
 
+
   const val MAIN_APP_PROCESS_NAME = "com.cnlaunch.x431.crp429"
+  const val MAIN_APP_GUARD_NAME = "com.cnlaunch.crpguard"
   const val MAIN_APP_PROCESS_SERVICE_NAME = "com.cnlaunch.diagnoseservice"
   const val MAIN_APP_DIAG_ACTIVITY = "com.cnlaunch.x431pro.activity.diagnose.DiagnoseActivity"
   const val MAIN_APP_RECEIVER_NAME = "com.gear.crp.MainBroadCast"
@@ -25,10 +27,12 @@ internal object CommonConst {
   const val VALUE_OBD_DIAG = "obd"
   const val VALUE_RESET_DIAG = "reset"
   const val ACTION_SEND_INIT_INFO = "com.cnlaunch.x431.init_total"
+  const val ACTION_SWITCH_LANG = "com.cnlaunch.x431.init_switch_lang"
   const val ACTION_CLEAR_CACHE = "com.cnlaunch.x431.clearcache"
   const val ACTION_DEVICE_INFO = "com.cnlaunch.x431.send_device_info"
   const val ACTION_OBD_CONNECTED = "com.cnlaunch.x431.set_flag_12v"
   const val ACTION_TPMS_INIT_RESULT = "action_tpms_init_result"
+  const val ACTION_SWITCH_LANG_RESULT = "action_switch_lang_result"
   const val ACTION_REFRESH_CAR_FILE = "action_refresh_car_file"
   const val KEY_INIT_RESULT = "initResult"
   const val KEY_INIT_MSG = "initMsg"

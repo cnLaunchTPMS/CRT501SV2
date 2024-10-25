@@ -14,6 +14,8 @@ import com.cnlaunch.crt501sv2util.CommonConst.ACTION_CLEAR_CACHE
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_OBD_CONNECTED
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_REFRESH_CAR_FILE
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_SEND_INIT_INFO
+import com.cnlaunch.crt501sv2util.CommonConst.ACTION_SWITCH_LANG
+import com.cnlaunch.crt501sv2util.CommonConst.ACTION_SWITCH_LANG_RESULT
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_TPMS_INIT_RESULT
 import com.cnlaunch.crt501sv2util.CommonConst.BUNDLE_EXTRA_DATA_KEY
 import com.cnlaunch.crt501sv2util.CommonConst.CUST_COUNTRY
@@ -30,6 +32,7 @@ import com.cnlaunch.crt501sv2util.CommonConst.KEY_SERIAL_NO
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_SERIAL_NO_TPMS
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_AIDL_SERVICE
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_DIAG_ACTIVITY
+import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_GUARD_NAME
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_PROCESS_NAME
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_PROCESS_SERVICE_NAME
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_RECEIVER_NAME
@@ -122,8 +125,6 @@ class LaunchUtil constructor(context: Context) {
    */
   fun switchDebug(isDebug: Boolean) {
     CommonConst.isDebug = isDebug
-
-
   }
 
   
@@ -150,6 +151,7 @@ class LaunchUtil constructor(context: Context) {
     } catch (e: JSONException) {
       if (CommonConst.isDebug) {
         Log.e(TAG, "初始化异常:" + e.message)
+        callback?.onError(e.message ?: "")
       }
     }
     callback?.onStart()
@@ -182,6 +184,46 @@ class LaunchUtil constructor(context: Context) {
           callback?.onEnd(tpmsInitBean)
         }
 
+      }
+    }, initFilter)
+  }
+
+
+
+  /**
+   * 切换语言
+   * @param languageEnum 语言类型枚举
+   * @param callback     回调，可选
+   */
+  fun switchLang(languageEnum: LanguageEnum, callback: LaunchCallback?) {
+    if (CommonConst.isDebug) {
+      Log.d(TAG, "执行切换语言")
+    }
+    try {
+      val intent = Intent(ACTION_SWITCH_LANG)
+      intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NAME)
+      val initInfo = JSONObject()
+      initInfo.put(CUST_COUNTRY, "325")
+      initInfo.put(CUST_LANG, languageEnum.index)
+      initInfo.put(INIT_CONFIG, false)
+      initInfo.put(TPMS_REGION, languageEnum.regionIndex)
+      intent.putExtra(BUNDLE_EXTRA_DATA_KEY, initInfo.toString())
+      mContext.sendBroadcast(intent)
+    } catch (e: JSONException) {
+      if (CommonConst.isDebug) {
+        Log.e(TAG, "切换语言异常:" + e.message)
+        callback?.onError(e.message ?: "")
+      }
+    }
+    callback?.onStart()
+    val initFilter = IntentFilter()
+    initFilter.addAction(ACTION_SWITCH_LANG_RESULT)
+    mContext.registerReceiver(object : BroadcastReceiver() {
+      override fun onReceive(context: Context, intent: Intent) {
+        if (ACTION_SWITCH_LANG_RESULT == intent.action) {
+          mContext.unregisterReceiver(this)
+        }
+         callback?.onEnd(intent.getBooleanExtra(KEY_INIT_RESULT,false))
       }
     }, initFilter)
   }
@@ -442,6 +484,7 @@ class LaunchUtil constructor(context: Context) {
     }
     if (hasGotoLaunchApp) {
       ComUtils.killProcess(MAIN_APP_PROCESS_NAME)
+      ComUtils.killProcess(MAIN_APP_GUARD_NAME)
       ComUtils.killProcess(MAIN_APP_PROCESS_SERVICE_NAME)
       hasGotoLaunchApp = false
     }
