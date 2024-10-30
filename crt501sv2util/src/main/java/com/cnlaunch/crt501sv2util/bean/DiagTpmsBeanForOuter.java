@@ -184,7 +184,7 @@ public class DiagTpmsBeanForOuter implements Serializable {
     }
 
     private void checkIsNullOrEmpty(String data) throws Exception {
-        if (TextUtils.isEmpty(data)){
+        if (data == null){
             throw new Exception("数据不能为空");
         }
     }
