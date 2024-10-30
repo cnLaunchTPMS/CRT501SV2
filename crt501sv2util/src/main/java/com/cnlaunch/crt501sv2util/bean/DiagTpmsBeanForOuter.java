@@ -227,7 +227,7 @@ public class DiagTpmsBeanForOuter implements Serializable {
                 transBuilder.append("FR=").append(getFr()).append("\n");
                 transBuilder.append("RR=").append(getRr()).append("\n");
                 transBuilder.append("RL=").append(getRl()).append("\n");
-                transBuilder.append("SP=").append(getRl()).append("\n");
+                transBuilder.append("SP=").append(getSp()).append("\n");
                 break;
 
 
