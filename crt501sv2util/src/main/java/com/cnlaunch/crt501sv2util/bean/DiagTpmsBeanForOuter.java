@@ -86,6 +86,7 @@ public class DiagTpmsBeanForOuter implements Serializable {
     }
 
     public int getIdLen() throws Exception {
+
         checkIsNullOrEmpty(String.valueOf(idLen));
         return idLen;
     }
