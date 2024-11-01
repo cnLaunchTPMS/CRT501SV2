@@ -32,6 +32,7 @@ import com.cnlaunch.crt501sv2util.CommonConst.KEY_SERIAL_NO
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_SERIAL_NO_TPMS
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_AIDL_SERVICE
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_DIAG_ACTIVITY
+import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_FEEDBACK_ACTIVITY
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_GUARD_NAME
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_PROCESS_NAME
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_PROCESS_SERVICE_NAME
@@ -355,8 +356,24 @@ class LaunchUtil constructor(context: Context) {
     hasGotoLaunchApp = true
   }
 
-  
-  
+
+  /**
+   * 跳转诊断反馈
+   */
+  fun gotoFeedBack() {
+    if (CommonConst.isDebug) {
+      Log.d(TAG, "跳转元征诊断反馈")
+    }
+    val intent = Intent().apply {
+      component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_FEEDBACK_ACTIVITY)
+    }
+    mContext.startActivity(intent)
+    hasGotoLaunchApp = true
+  }
+
+
+
+
   /**
    * 开始OBD连接监听
    */
