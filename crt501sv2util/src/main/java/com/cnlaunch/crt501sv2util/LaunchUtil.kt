@@ -33,6 +33,7 @@ import com.cnlaunch.crt501sv2util.CommonConst.KEY_SERIAL_NO_TPMS
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_AIDL_SERVICE
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_DIAG_ACTIVITY
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_FEEDBACK_ACTIVITY
+import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_FIRMWARE_FIX_ACTIVITY
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_GUARD_NAME
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_PROCESS_NAME
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_PROCESS_SERVICE_NAME
@@ -242,6 +243,11 @@ class LaunchUtil constructor(context: Context) {
     if (CommonConst.isDebug) {
       Log.d(TAG, "跳转TPMS综合功能")
     }
+
+    //刷新文件
+    refreshFunctionFile()
+
+
     val intent = Intent()
     intent.putExtra(KEY_DIAGNOSE_ID, VALUE_TPMS_DIAG)
     intent.putExtra(KEY_OUTER_BEAN, beanForOuter.transmitString)
@@ -267,6 +273,11 @@ class LaunchUtil constructor(context: Context) {
     if (CommonConst.isDebug) {
       Log.d(TAG, "跳转OBD学习")
     }
+
+    //刷新文件
+    refreshFunctionFile()
+
+
     val intent = Intent()
     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
     intent.putExtra(KEY_DIAGNOSE_ID, VALUE_TPMS_DIAG)
@@ -305,6 +316,9 @@ class LaunchUtil constructor(context: Context) {
 
           //给外部暴露回调代理
           highFrequencyCallback?.onBooleanFunValue {
+
+
+
             aidlService.sendOBDLearnResult(it)
           }
 
@@ -331,6 +345,12 @@ class LaunchUtil constructor(context: Context) {
     if (CommonConst.isDebug) {
       Log.d(TAG, "跳转OBD诊断")
     }
+
+    //刷新文件
+    refreshFunctionFile()
+
+
+
     val intent = Intent()
     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
     intent.putExtra(KEY_DIAGNOSE_ID, VALUE_OBD_DIAG)
@@ -348,6 +368,12 @@ class LaunchUtil constructor(context: Context) {
     if (CommonConst.isDebug) {
       Log.d(TAG, "跳转特殊功能")
     }
+
+    //刷新文件
+    refreshFunctionFile()
+
+
+
     val intent = Intent()
     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
     intent.putExtra(KEY_DIAGNOSE_ID, VALUE_RESET_DIAG)
@@ -372,6 +398,22 @@ class LaunchUtil constructor(context: Context) {
   }
 
 
+  fun gotoFirmwareFix() {
+    if (CommonConst.isDebug) {
+      Log.d(TAG, "跳转元征固件修复")
+    }
+
+    //刷新文件
+    refreshFunctionFile()
+
+
+
+    val intent = Intent().apply {
+      component = ComponentName(MAIN_APP_PROCESS_NAME,MAIN_APP_FIRMWARE_FIX_ACTIVITY)
+    }
+    mContext.startActivity(intent)
+    hasGotoLaunchApp = true
+  }
 
 
   /**
