@@ -19,13 +19,25 @@ class ComUtils {
 
     private static final String COMMAND_READ_OBD_VOLTAGE = "cat /sys/bus/iio/devices/iio:device0/in_voltage1_raw";
 
+    private static int SOUND_OBD_INTERVAL = 50;
+    private static int SOUND_OBD_CYCLE = 370370;
+    private static int SOUND_OBD_RATIO = 185185;
+
+    public static final String set_cycle = "/sys/devices/bsk_misc/beep_duration";
+    public static final String set_duty_ratio = "/sys/devices/bsk_misc/beep_duty";
+
+
+    protected static void command(String command) {
+        sendCommand(new String[]{command});
+    }
+
     /**
      * 强制杀死进程
      *
      * @param processName 进程名
      */
     protected static void killProcess(String processName) {
-        command(new String[]{COMMAND_KILL_PREFIX + processName});
+        sendCommand(new String[]{COMMAND_KILL_PREFIX + processName});
     }
 
 
@@ -35,20 +47,20 @@ class ComUtils {
      * @return
      */
     protected static String getObdVoltage() {
-        return command(new String[]{COMMAND_READ_OBD_VOLTAGE});
+        return sendCommand(new String[]{COMMAND_READ_OBD_VOLTAGE});
     }
 
     protected static void gotoFactory(){
-        ComUtils.command(new String[]{"am start -n com.cnlaunch.crpguard/com.cnlaunch.crpguard.factory.activity.factory.FATNewFactoryActivity"});
+        ComUtils.sendCommand(new String[]{"am start -n com.cnlaunch.crpguard/com.cnlaunch.crpguard.factory.activity.factory.FATNewFactoryActivity"});
     }
 
     protected static void powerUSB(boolean isOpen){
-        ComUtils.command(new String[]{"echo" + " " + (isOpen ? 1 : 0) + " > " + "sys/devices/bsk_misc/bsk_tpms_power"});
+        ComUtils.sendCommand(new String[]{"echo" + " " + (isOpen ? 1 : 0) + " > " + "sys/devices/bsk_misc/bsk_tpms_power"});
     }
 
     //查看tpms 系统节点上电情况
     protected static Boolean getTpmsPointState() {
-        String flag = command(new String[]{"cat sys/devices/bsk_misc/bsk_tpms_power"}) ;
+        String flag = sendCommand(new String[]{"cat sys/devices/bsk_misc/bsk_tpms_power"}) ;
         if (!TextUtils.isEmpty(flag)) {
             return flag.trim().equals("1");
         } else {
@@ -56,8 +68,22 @@ class ComUtils {
         }
     }
 
+    protected static void playSound(int repeatCount){
+        try {
+            command("echo" + " " + SOUND_OBD_CYCLE  + " > " + set_cycle);
+            command("echo" + " " + SOUND_OBD_RATIO + " > " + set_duty_ratio);
+            for (int i = 0; i < repeatCount; i++) {
+                command("echo" + " 1 > " + "/sys/devices/bsk_misc/beep_on_off");
+                Thread.sleep(SOUND_OBD_INTERVAL);
+                command("echo" + " 0 > " + "/sys/devices/bsk_misc/beep_on_off");
+            }
+        } catch (InterruptedException ie) {
 
-    private static String command(String[] commands) {
+        }
+    }
+
+
+    private static String sendCommand(String[] commands) {
         String line;
 
         String ret = null;

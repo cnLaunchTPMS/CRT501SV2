@@ -66,9 +66,13 @@ import java.lang.ref.WeakReference
  * @date 2024-08-11
  */
 class LaunchUtil constructor(context: Context) {
-  
-  companion object{
+
+  companion object {
     private const val TAG = "LaunchUtil"
+
+    private const val SOUND_REPEAT_TIMES_2 = 2
+    private const val SOUND_REPEAT_TIMES_8 = 8
+
 
 
     //静态的实例变量
@@ -83,7 +87,6 @@ class LaunchUtil constructor(context: Context) {
       }
     }
   }
-
 
 
   //线程不变的CoroutineScope
@@ -113,13 +116,11 @@ class LaunchUtil constructor(context: Context) {
 
   //声明一个 Context 变量
   private val mContext: Context by lazy {
-    WeakReference<Context>(context.applicationContext).get()?:run {
+    WeakReference<Context>(context.applicationContext).get() ?: run {
       throw IllegalStateException("Context is no longer available.")
     }
   }
 
-
-  
 
   /**
    * 切换是否为调试模式
@@ -129,17 +130,16 @@ class LaunchUtil constructor(context: Context) {
     CommonConst.isDebug = isDebug
   }
 
-  
-  
+
   /**
    * 注册与初始化
    * @param languageEnum 语言类型枚举
    * @param callback     回调，可选
    */
   fun registerAndInit(languageEnum: LanguageEnum, callback: LaunchCallback?) {
-    if (CommonConst.isDebug) {
-      Log.d(TAG, "执行初始化")
-    }
+
+    logInner("执行初始化")
+
     try {
       val intent = Intent(ACTION_SEND_INIT_INFO)
       intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NAME)
@@ -151,10 +151,8 @@ class LaunchUtil constructor(context: Context) {
       intent.putExtra(BUNDLE_EXTRA_DATA_KEY, initInfo.toString())
       mContext.sendBroadcast(intent)
     } catch (e: JSONException) {
-      if (CommonConst.isDebug) {
-        Log.e(TAG, "初始化异常:" + e.message)
-        callback?.onError(e.message ?: "")
-      }
+      logInner("初始化异常:" + e.message)
+      callback?.onError(e.message ?: "")
     }
     callback?.onStart()
     val initFilter = IntentFilter()
@@ -167,7 +165,7 @@ class LaunchUtil constructor(context: Context) {
 
 
         val tpmsInitBean = TpmsInitBean(
-          intent.getBooleanExtra(KEY_INIT_RESULT,false),
+          intent.getBooleanExtra(KEY_INIT_RESULT, false),
           intent.getStringExtra(KEY_INIT_MSG) ?: "",
           TpmsDeviceInfoBean()
         )
@@ -191,16 +189,15 @@ class LaunchUtil constructor(context: Context) {
   }
 
 
-
   /**
    * 切换语言
    * @param languageEnum 语言类型枚举
    * @param callback     回调，可选
    */
   fun switchLang(languageEnum: LanguageEnum, callback: LaunchCallback?) {
-    if (CommonConst.isDebug) {
-      Log.d(TAG, "执行切换语言")
-    }
+
+    logInner("执行切换语言")
+
     try {
       val intent = Intent(ACTION_SWITCH_LANG)
       intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NAME)
@@ -225,7 +222,7 @@ class LaunchUtil constructor(context: Context) {
         if (ACTION_SWITCH_LANG_RESULT == intent.action) {
           mContext.unregisterReceiver(this)
         }
-         callback?.onEnd(intent.getBooleanExtra(KEY_INIT_RESULT,false))
+        callback?.onEnd(intent.getBooleanExtra(KEY_INIT_RESULT, false))
       }
     }, initFilter)
   }
@@ -240,9 +237,8 @@ class LaunchUtil constructor(context: Context) {
   fun gotoMixFunction(
     beanForOuter: DiagTpmsBeanForOuter,
   ) {
-    if (CommonConst.isDebug) {
-      Log.d(TAG, "跳转TPMS综合功能")
-    }
+
+    logInner("跳转TPMS综合功能")
 
     //刷新文件
     refreshFunctionFile()
@@ -251,13 +247,12 @@ class LaunchUtil constructor(context: Context) {
     val intent = Intent()
     intent.putExtra(KEY_DIAGNOSE_ID, VALUE_TPMS_DIAG)
     intent.putExtra(KEY_OUTER_BEAN, beanForOuter.transmitString)
-    intent.putExtra(KEY_OUTER_SPECIAL_TEXT,beanForOuter.specialDescFormOuter)
+    intent.putExtra(KEY_OUTER_SPECIAL_TEXT, beanForOuter.specialDescFormOuter)
     intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_DIAG_ACTIVITY)
     mContext.startActivity(intent)
     hasGotoLaunchApp = true
 
   }
-
 
 
   /**
@@ -269,10 +264,9 @@ class LaunchUtil constructor(context: Context) {
   fun gotoObdLearn(
     beanForOuter: DiagTpmsBeanForOuter,
     highFrequencyCallback: LaunchCallback?
-  ){
-    if (CommonConst.isDebug) {
-      Log.d(TAG, "跳转OBD学习")
-    }
+  ) {
+
+    logInner("跳转OBD学习")
 
     //刷新文件
     refreshFunctionFile()
@@ -283,7 +277,7 @@ class LaunchUtil constructor(context: Context) {
     intent.putExtra(KEY_DIAGNOSE_ID, VALUE_TPMS_DIAG)
     beanForOuter.functionEnum = DiagTpmsBeanForOuter.TpmsFunctionEnum.OBD_LEARN
     intent.putExtra(KEY_OUTER_BEAN, beanForOuter.transmitString)
-    intent.putExtra(KEY_OUTER_SPECIAL_TEXT,beanForOuter.specialDescFormOuter)
+    intent.putExtra(KEY_OUTER_SPECIAL_TEXT, beanForOuter.specialDescFormOuter)
     intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_DIAG_ACTIVITY)
 
     //绑定AIDL服务
@@ -301,22 +295,22 @@ class LaunchUtil constructor(context: Context) {
 
             override fun onOBDLearnData(tireCount: Int, tireIndex: Int) {
 
-              if (tireCount < 0){
+              if (tireCount < 0) {
                 highFrequencyCallback?.onError("-1")
               }
 
               highFrequencyCallback?.onJsonValue(JSONObject().apply {
-                put("tireCount",tireCount)
-                put("tireIndex",tireIndex)
+                put("tireCount", tireCount)
+                put("tireIndex", tireIndex)
               })
             }
+
             override fun onOBDLearnResult(isSuccess: Boolean) {}
           })
 
 
           //给外部暴露回调代理
           highFrequencyCallback?.onBooleanFunValue {
-
 
 
             aidlService.sendOBDLearnResult(it)
@@ -336,19 +330,17 @@ class LaunchUtil constructor(context: Context) {
     hasGotoLaunchApp = true
   }
 
-  
-  
+
   /**
    * 跳转到OBD诊断
    */
   fun gotoObdDiagnose() {
-    if (CommonConst.isDebug) {
-      Log.d(TAG, "跳转OBD诊断")
-    }
+
+    logInner("跳转OBD诊断")
+
 
     //刷新文件
     refreshFunctionFile()
-
 
 
     val intent = Intent()
@@ -359,19 +351,15 @@ class LaunchUtil constructor(context: Context) {
     hasGotoLaunchApp = true
   }
 
-  
-  
+
   /**
    * 跳转到特殊功能
    */
   fun gotoResetDiagnose() {
-    if (CommonConst.isDebug) {
-      Log.d(TAG, "跳转特殊功能")
-    }
+    logInner("跳转特殊功能")
 
     //刷新文件
     refreshFunctionFile()
-
 
 
     val intent = Intent()
@@ -387,9 +375,8 @@ class LaunchUtil constructor(context: Context) {
    * 跳转诊断反馈
    */
   fun gotoFeedBack() {
-    if (CommonConst.isDebug) {
-      Log.d(TAG, "跳转元征诊断反馈")
-    }
+    logInner("跳转元征诊断反馈")
+
     val intent = Intent().apply {
       component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_FEEDBACK_ACTIVITY)
     }
@@ -399,17 +386,15 @@ class LaunchUtil constructor(context: Context) {
 
 
   fun gotoFirmwareFix() {
-    if (CommonConst.isDebug) {
-      Log.d(TAG, "跳转元征固件修复")
-    }
+
+    logInner("跳转元征固件修复")
 
     //刷新文件
     refreshFunctionFile()
 
 
-
     val intent = Intent().apply {
-      component = ComponentName(MAIN_APP_PROCESS_NAME,MAIN_APP_FIRMWARE_FIX_ACTIVITY)
+      component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_FIRMWARE_FIX_ACTIVITY)
     }
     mContext.startActivity(intent)
     hasGotoLaunchApp = true
@@ -420,35 +405,35 @@ class LaunchUtil constructor(context: Context) {
    * 开始OBD连接监听
    */
   fun startListenObdState(launchCallback: LaunchCallback?) {
-    Log.d(TAG, "开始监听OBD")
-    if (obdJob == null){
-      obdJob = scopeInner.launch(Dispatchers.IO) {
-        var currentIsConnected = false
-        while (true) {
-          val voltageString = ComUtils.getObdVoltage()
-          var isConnected = false
-          if (!TextUtils.isEmpty(voltageString)){
-            val originVoltage = voltageString.toFloat() * 18 / 1024 + 1.7f
-            val voltage = originVoltage + (originVoltage - 8) * 0.15f
-            isConnected = originVoltage > 8
-            launchCallback?.onFloatValue(voltage)
-          }
+    logInner("开始监听OBD")
 
-          if (currentIsConnected != isConnected) {
-            if (CommonConst.isDebug) {
-              Log.d(TAG, "OBD状态变化：$isConnected")
-            }
-            currentIsConnected = isConnected
-            scopeInner.launch(Dispatchers.Main) {
-              launchCallback?.onBooleanValue(isConnected)
-              val intent = Intent(ACTION_OBD_CONNECTED)
-              intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NAME)
-              intent.putExtra(BUNDLE_EXTRA_DATA_KEY, isConnected)
-              mContext.sendBroadcast(intent)
-            }
-          }
-          delay(2000L)
+    obdJob?.cancel()
+
+    obdJob = scopeInner.launch(Dispatchers.IO) {
+      var currentIsConnected = false
+      while (true) {
+        val voltageString = ComUtils.getObdVoltage()
+        var isConnected = false
+        if (!TextUtils.isEmpty(voltageString)) {
+          val originVoltage = voltageString.toFloat() * 18 / 1024 + 1.7f
+          val voltage = originVoltage + (originVoltage - 8) * 0.15f
+          isConnected = originVoltage > 8
+          launchCallback?.onFloatValue(voltage)
         }
+
+        if (currentIsConnected != isConnected) {
+          logInner("OBD状态变化：$isConnected")
+          currentIsConnected = isConnected
+          scopeInner.launch(Dispatchers.Main) {
+            playSound( if (isConnected) SOUND_REPEAT_TIMES_8 else SOUND_REPEAT_TIMES_2)
+            launchCallback?.onBooleanValue(isConnected)
+            val intent = Intent(ACTION_OBD_CONNECTED)
+            intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NAME)
+            intent.putExtra(BUNDLE_EXTRA_DATA_KEY, isConnected)
+            mContext.sendBroadcast(intent)
+          }
+        }
+        delay(1000L)
       }
     }
 
@@ -460,15 +445,12 @@ class LaunchUtil constructor(context: Context) {
   }
 
 
-  
-  
   /**
    * 停止OBD连接监听
    */
   fun stopListenObdState() {
-    if (CommonConst.isDebug) {
-      Log.d(TAG, "停止监听OBD")
-    }
+
+    logInner("停止监听OBD")
 
     obdJob?.cancel()
     obdJob = null
@@ -483,9 +465,7 @@ class LaunchUtil constructor(context: Context) {
     isOpen: Boolean,
     callBack: (Boolean) -> Unit = {}
   ) {
-    if (CommonConst.isDebug) {
-      Log.d(TAG, "执行USB供电 ：$isOpen")
-    }
+    logInner("执行USB供电 ：$isOpen")
 
     scopeInner.launch {
       ComUtils.powerUSB(isOpen)
@@ -493,15 +473,13 @@ class LaunchUtil constructor(context: Context) {
       callBack.invoke(getTpmsPointState() == isOpen)
     }
   }
-  
-  
+
+
   /**
    * 清理缓存
    */
   fun clearCache() {
-    if (CommonConst.isDebug) {
-      Log.d(TAG, "清理缓存")
-    }
+    logInner("清理缓存")
     val intent = Intent(ACTION_CLEAR_CACHE)
     intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NAME)
     mContext.sendBroadcast(intent)
@@ -511,10 +489,8 @@ class LaunchUtil constructor(context: Context) {
   /**
    * 跳转到工厂测试
    */
-  fun gotoLaunchFactoryTest(){
-    if (CommonConst.isDebug) {
-      Log.d(TAG, "跳转工厂测试")
-    }
+  fun gotoLaunchFactoryTest() {
+    logInner("跳转工厂测试")
     ComUtils.gotoFactory()
   }
 
@@ -522,11 +498,8 @@ class LaunchUtil constructor(context: Context) {
   /**
    * 刷新功能目录
    */
-  fun refreshFunctionFile(){
-    if (CommonConst.isDebug) {
-      Log.d(TAG, "刷新功能文件")
-    }
-
+  fun refreshFunctionFile() {
+    logInner("刷新功能文件")
     mContext.sendBroadcast(Intent(ACTION_REFRESH_CAR_FILE).apply {
       component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NEW_NAME)
     })
@@ -538,9 +511,7 @@ class LaunchUtil constructor(context: Context) {
    * 释放元征相关app
    */
   fun releaseLaunchApp() {
-    if (CommonConst.isDebug) {
-      Log.d(TAG, "释放元征APP")
-    }
+    logInner("释放元征APP")
     if (hasGotoLaunchApp) {
       ComUtils.killProcess(MAIN_APP_PROCESS_NAME)
       ComUtils.killProcess(MAIN_APP_GUARD_NAME)
@@ -549,5 +520,22 @@ class LaunchUtil constructor(context: Context) {
     }
   }
 
- 
+
+  /**
+   * 调用蜂鸣器
+   * @param repeatTimes 次数
+   */
+  private fun playSound(repeatTimes : Int){
+    logInner("调用蜂蜜器")
+    ComUtils.playSound(repeatTimes)
+  }
+
+
+  private fun logInner(msg: String) {
+    if (CommonConst.isDebug) {
+      Log.d(TAG, msg)
+    }
+  }
+
+
 }
