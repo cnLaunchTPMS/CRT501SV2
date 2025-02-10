@@ -462,8 +462,10 @@ class LaunchUtil constructor(context: Context) {
   fun stopListenObdState() {
     logInner("停止监听OBD")
     obdJob?.cancel()
+    obdJob?.let { runBlocking { it.join() } }
     obdJob = null
   }
+
 
 
   /**
