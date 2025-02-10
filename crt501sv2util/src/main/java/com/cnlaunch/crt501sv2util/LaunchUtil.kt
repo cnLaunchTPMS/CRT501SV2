@@ -53,8 +53,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.json.JSONException
 import org.json.JSONObject
 import java.lang.ref.WeakReference
@@ -376,11 +380,12 @@ class LaunchUtil constructor(context: Context) {
    */
   fun gotoFeedBack() {
     logInner("跳转元征诊断反馈")
+    mContext.startActivity(
+      Intent().apply {
+        component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_FEEDBACK_ACTIVITY)
+      }
+    )
 
-    val intent = Intent().apply {
-      component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_FEEDBACK_ACTIVITY)
-    }
-    mContext.startActivity(intent)
     hasGotoLaunchApp = true
   }
 
@@ -407,51 +412,55 @@ class LaunchUtil constructor(context: Context) {
   fun startListenObdState(launchCallback: LaunchCallback?) {
     logInner("开始监听OBD")
 
+
+    // 请求取消
     obdJob?.cancel()
+
+    // 确保旧任务完成
+    obdJob?.let { runBlocking { it.join() } }
 
     obdJob = scopeInner.launch(Dispatchers.IO) {
       var currentIsConnected = false
-      while (true) {
+      while (isActive) {
+
+        // 确保协程可被取消
+        ensureActive()
+
         val voltageString = ComUtils.getObdVoltage()
-        var isConnected = false
-        if (!TextUtils.isEmpty(voltageString)) {
-          val originVoltage = voltageString.toFloat() * 18 / 1024 + 1.7f
-          val voltage = originVoltage + (originVoltage - 8) * 0.15f
-          isConnected = originVoltage > 8
-          launchCallback?.onFloatValue(voltage)
-        }
+        var isConnected: Boolean = false
+
+        val originVoltage = voltageString.toFloatOrNull()?.let { it * 18 / 1024 + 1.7f } ?: continue
+        val voltage = originVoltage + (originVoltage - 8) * 0.15f
+        isConnected = originVoltage > 8
+        launchCallback?.onFloatValue(voltage)
 
         if (currentIsConnected != isConnected) {
           logInner("OBD状态变化：$isConnected")
           currentIsConnected = isConnected
-          scopeInner.launch(Dispatchers.Main) {
-            playSound( if (isConnected) SOUND_REPEAT_TIMES_8 else SOUND_REPEAT_TIMES_2)
+          playSound(if (isConnected) SOUND_REPEAT_TIMES_8 else SOUND_REPEAT_TIMES_2)
+          withContext(Dispatchers.Main) {
             launchCallback?.onBooleanValue(isConnected)
-            val intent = Intent(ACTION_OBD_CONNECTED)
-            intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NAME)
-            intent.putExtra(BUNDLE_EXTRA_DATA_KEY, isConnected)
-            mContext.sendBroadcast(intent)
+            mContext.sendBroadcast(
+              Intent(ACTION_OBD_CONNECTED).apply {
+                component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NAME)
+                putExtra(BUNDLE_EXTRA_DATA_KEY, isConnected)
+              }
+            )
           }
         }
+
         delay(1000L)
       }
     }
-
-    if (obdJob?.isActive == true) {
-      scopeInner.launch {
-        obdJob?.start()
-      }
-    }
   }
+
 
 
   /**
    * 停止OBD连接监听
    */
   fun stopListenObdState() {
-
     logInner("停止监听OBD")
-
     obdJob?.cancel()
     obdJob = null
   }
@@ -516,6 +525,17 @@ class LaunchUtil constructor(context: Context) {
       ComUtils.killProcess(MAIN_APP_PROCESS_NAME)
       ComUtils.killProcess(MAIN_APP_GUARD_NAME)
       ComUtils.killProcess(MAIN_APP_PROCESS_SERVICE_NAME)
+      hasGotoLaunchApp = false
+    }
+  }
+
+
+
+  fun releaseSiming() {
+    logInner("释放思明")
+    if (hasGotoLaunchApp) {
+      ComUtils.killProcess("com.custompad.tpms")
+
       hasGotoLaunchApp = false
     }
   }
