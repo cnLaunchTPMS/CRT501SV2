@@ -486,6 +486,26 @@ class LaunchUtil constructor(context: Context) {
 
 
   /**
+   * 开关OBD供电
+   * @param callBack 回调
+   */
+  fun switchOBDPower(
+    isOpen: Boolean,
+    callBack: (Boolean) -> Unit = {}
+  ) {
+    logInner("执行OBD供电 ：$isOpen")
+
+    scopeInner.launch {
+      ComUtils.powerOBD(isOpen)
+      delay(500)
+      callBack.invoke(getTpmsPointState() == isOpen)
+    }
+  }
+
+
+
+
+  /**
    * 清理缓存
    */
   fun clearCache() {
@@ -536,7 +556,6 @@ class LaunchUtil constructor(context: Context) {
       ComUtils.killProcess(MAIN_APP_GUARD_NAME)
       ComUtils.killProcess(MAIN_APP_PROCESS_SERVICE_NAME)
       hasGotoLaunchApp = false
-      ComUtils.powerOBD(true)
     }
   }
 
