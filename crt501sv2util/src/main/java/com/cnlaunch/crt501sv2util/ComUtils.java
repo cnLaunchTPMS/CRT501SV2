@@ -51,11 +51,16 @@ class ComUtils {
     }
 
     protected static void gotoFactory(){
-        ComUtils.sendCommand(new String[]{"am start -n com.cnlaunch.crpguard/com.cnlaunch.crpguard.factory.activity.factory.FATNewFactoryActivity"});
+        ComUtils.sendCommand(new String[]{"am start -n com.cnlaunch.crpguard/com.cnlaunch.crpguard.factory.activity.factory.FATNewFactoryActivity -f 0x10008000"});
     }
 
     protected static void powerUSB(boolean isOpen){
         ComUtils.sendCommand(new String[]{"echo" + " " + (isOpen ? 1 : 0) + " > " + "sys/devices/bsk_misc/bsk_tpms_power"});
+    }
+
+
+    protected static void powerOBD(boolean isOpen) {
+        ComUtils.sendCommand(new String[]{"echo" + " " + (isOpen ? 1 : 0) + " > " + "/sys/devices/bsk_misc/bsk_obd_power"});
     }
 
     //查看tpms 系统节点上电情况

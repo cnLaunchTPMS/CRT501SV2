@@ -32,6 +32,7 @@ import com.cnlaunch.crt501sv2util.CommonConst.KEY_SERIAL_NO
 import com.cnlaunch.crt501sv2util.CommonConst.KEY_SERIAL_NO_TPMS
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_AIDL_SERVICE
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_DIAG_ACTIVITY
+import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_FACTORY_ACTIVITY
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_FEEDBACK_ACTIVITY
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_FIRMWARE_FIX_ACTIVITY
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_GUARD_NAME
@@ -315,8 +316,6 @@ class LaunchUtil constructor(context: Context) {
 
           //给外部暴露回调代理
           highFrequencyCallback?.onBooleanFunValue {
-
-
             aidlService.sendOBDLearnResult(it)
           }
 
@@ -502,7 +501,16 @@ class LaunchUtil constructor(context: Context) {
    */
   fun gotoLaunchFactoryTest() {
     logInner("跳转工厂测试")
-    ComUtils.gotoFactory()
+    val intent = Intent().apply {
+      component = ComponentName(MAIN_APP_GUARD_NAME, MAIN_APP_FACTORY_ACTIVITY)
+      flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+    }
+    mContext.startActivity(intent)
+    scopeInner.launch(Dispatchers.Main) {
+      delay(800)
+      mContext.startActivity(intent)
+    }
+
   }
 
 
@@ -528,6 +536,7 @@ class LaunchUtil constructor(context: Context) {
       ComUtils.killProcess(MAIN_APP_GUARD_NAME)
       ComUtils.killProcess(MAIN_APP_PROCESS_SERVICE_NAME)
       hasGotoLaunchApp = false
+      ComUtils.powerOBD(true)
     }
   }
 
@@ -548,7 +557,7 @@ class LaunchUtil constructor(context: Context) {
    * @param repeatTimes 次数
    */
   private fun playSound(repeatTimes : Int){
-    logInner("调用蜂蜜器")
+    logInner("调用蜂鸣器")
     ComUtils.playSound(repeatTimes)
   }
 

@@ -10,6 +10,7 @@ internal object CommonConst {
   const val MAIN_APP_PROCESS_SERVICE_NAME = "com.cnlaunch.diagnoseservice"
   const val MAIN_APP_DIAG_ACTIVITY = "com.cnlaunch.x431pro.activity.diagnose.DiagnoseActivity"
   const val MAIN_APP_FEEDBACK_ACTIVITY = "com.cnlaunch.x431pro.activity.setting.FeedbackActivity"
+  const val MAIN_APP_FACTORY_ACTIVITY = "com.cnlaunch.crpguard.factory.activity.factory.FATNewFactoryActivity"
   const val MAIN_APP_FIRMWARE_FIX_ACTIVITY = "com.gear.diag.FirmwareFixActivitity"
   const val MAIN_APP_RECEIVER_NAME = "com.gear.crp.MainBroadCast"
   const val MAIN_APP_RECEIVER_NEW_NAME = "com.gear.crp.NewMainBroadcastReceiver"
@@ -42,6 +43,5 @@ internal object CommonConst {
   const val KEY_BOOT_VERSION = "bootVersion"
   const val KEY_DOWNLOAD_VERSION = "downloadVersion"
   const val KEY_SERIAL_NO_TPMS = "serialNo_tpms"
-
 
 }
