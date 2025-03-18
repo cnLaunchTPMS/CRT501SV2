@@ -12,6 +12,7 @@ import android.util.Log
 import com.cnlaunch.crt501sv2util.ComUtils.getTpmsPointState
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_CLEAR_CACHE
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_OBD_CONNECTED
+import com.cnlaunch.crt501sv2util.CommonConst.ACTION_READ_ECUID_RESULT
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_REFRESH_CAR_FILE
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_SEND_INIT_INFO
 import com.cnlaunch.crt501sv2util.CommonConst.ACTION_SWITCH_LANG
@@ -40,6 +41,9 @@ import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_PROCESS_NAME
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_PROCESS_SERVICE_NAME
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_RECEIVER_NAME
 import com.cnlaunch.crt501sv2util.CommonConst.MAIN_APP_RECEIVER_NEW_NAME
+import com.cnlaunch.crt501sv2util.CommonConst.SIMING_DATA_READ_ECUID_PROTOCOL_ID
+import com.cnlaunch.crt501sv2util.CommonConst.SIMING_DATA_TIRE_COUNT
+import com.cnlaunch.crt501sv2util.CommonConst.SIMING_DATA_TIRE_ID_LIST
 import com.cnlaunch.crt501sv2util.CommonConst.TPMS_REGION
 import com.cnlaunch.crt501sv2util.CommonConst.VALUE_OBD_DIAG
 import com.cnlaunch.crt501sv2util.CommonConst.VALUE_RESET_DIAG
@@ -91,6 +95,10 @@ class LaunchUtil constructor(context: Context) {
         instance ?: LaunchUtil(context).also { instance = it }
       }
     }
+  }
+
+  private val tempBroadcastReceiverList : MutableList<BroadcastReceiver> by lazy {
+    ArrayList()
   }
 
 
@@ -162,10 +170,11 @@ class LaunchUtil constructor(context: Context) {
     callback?.onStart()
     val initFilter = IntentFilter()
     initFilter.addAction(ACTION_TPMS_INIT_RESULT)
-    mContext.registerReceiver(object : BroadcastReceiver() {
+    val initResultBR = object : BroadcastReceiver() {
       override fun onReceive(context: Context, intent: Intent) {
         if (ACTION_TPMS_INIT_RESULT == intent.action) {
           mContext.unregisterReceiver(this)
+          tempBroadcastReceiverList.remove(this)
         }
 
 
@@ -190,7 +199,9 @@ class LaunchUtil constructor(context: Context) {
         }
 
       }
-    }, initFilter)
+    }
+    tempBroadcastReceiverList.add(initResultBR)
+    mContext.registerReceiver(initResultBR, initFilter)
   }
 
 
@@ -222,14 +233,17 @@ class LaunchUtil constructor(context: Context) {
     callback?.onStart()
     val initFilter = IntentFilter()
     initFilter.addAction(ACTION_SWITCH_LANG_RESULT)
-    mContext.registerReceiver(object : BroadcastReceiver() {
+    val switchLangBR = object : BroadcastReceiver() {
       override fun onReceive(context: Context, intent: Intent) {
         if (ACTION_SWITCH_LANG_RESULT == intent.action) {
           mContext.unregisterReceiver(this)
+          tempBroadcastReceiverList.remove(this)
         }
         callback?.onEnd(intent.getBooleanExtra(KEY_INIT_RESULT, false))
       }
-    }, initFilter)
+    }
+    tempBroadcastReceiverList.add(switchLangBR)
+    mContext.registerReceiver(switchLangBR, initFilter)
   }
 
 
@@ -242,8 +256,23 @@ class LaunchUtil constructor(context: Context) {
   fun gotoMixFunction(
     beanForOuter: DiagTpmsBeanForOuter,
   ) {
-
     logInner("跳转TPMS综合功能")
+    gotoMixFunctionWithCallBack(beanForOuter,null)
+  }
+
+
+  /**
+   * 跳转TPMS综合功能,带回调
+   * @param beanForOuter 跳转用数据bean
+   * @param callback LaunchCallback
+   * @throws Exception 异常
+   */
+  @Throws(Exception::class)
+  fun gotoMixFunctionWithCallBack(
+    beanForOuter: DiagTpmsBeanForOuter,
+    callback: LaunchCallback?
+  ) {
+
 
     //刷新文件
     refreshFunctionFile()
@@ -256,6 +285,31 @@ class LaunchUtil constructor(context: Context) {
     intent.component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_DIAG_ACTIVITY)
     mContext.startActivity(intent)
     hasGotoLaunchApp = true
+
+    if (callback != null){
+      logInner("跳转TPMS综合功能，带回调")
+      if (beanForOuter.functionEnum == DiagTpmsBeanForOuter.TpmsFunctionEnum.READ_ECU_ID) {
+        val initFilter = IntentFilter()
+        initFilter.addAction(ACTION_READ_ECUID_RESULT)
+        val ecuidResultBroadcastReceiver = object : BroadcastReceiver() {
+          override fun onReceive(context: Context, intent: Intent) {
+            if (ACTION_READ_ECUID_RESULT == intent.action) {
+              mContext.unregisterReceiver(this)
+              tempBroadcastReceiverList.remove(this)
+              callback.onJsonValue(
+                JSONObject().apply {
+                  put(SIMING_DATA_TIRE_ID_LIST, intent.getStringArrayListExtra(SIMING_DATA_TIRE_ID_LIST))
+                  put(SIMING_DATA_READ_ECUID_PROTOCOL_ID, intent.getStringExtra(SIMING_DATA_READ_ECUID_PROTOCOL_ID))
+                  put(SIMING_DATA_TIRE_COUNT, intent.getIntExtra(SIMING_DATA_TIRE_COUNT,0))
+                }
+              )
+            }
+          }
+        }
+        mContext.registerReceiver(ecuidResultBroadcastReceiver ,initFilter)
+        tempBroadcastReceiverList.add(ecuidResultBroadcastReceiver)
+      }
+    }
 
   }
 
@@ -551,6 +605,11 @@ class LaunchUtil constructor(context: Context) {
    */
   fun releaseLaunchApp() {
     logInner("释放元征APP")
+    tempBroadcastReceiverList.forEach {
+      mContext.unregisterReceiver(it)
+    }
+    tempBroadcastReceiverList.clear()
+
     if (hasGotoLaunchApp) {
       ComUtils.killProcess(MAIN_APP_PROCESS_NAME)
       ComUtils.killProcess(MAIN_APP_GUARD_NAME)

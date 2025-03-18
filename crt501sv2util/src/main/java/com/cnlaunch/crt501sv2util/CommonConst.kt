@@ -37,11 +37,15 @@ internal object CommonConst {
   const val ACTION_TPMS_INIT_RESULT = "action_tpms_init_result"
   const val ACTION_SWITCH_LANG_RESULT = "action_switch_lang_result"
   const val ACTION_REFRESH_CAR_FILE = "action_refresh_car_file"
+  const val ACTION_READ_ECUID_RESULT = "action_read_ecuid_result"
   const val KEY_INIT_RESULT = "initResult"
   const val KEY_INIT_MSG = "initMsg"
   const val KEY_SERIAL_NO = "serialNo"
   const val KEY_BOOT_VERSION = "bootVersion"
   const val KEY_DOWNLOAD_VERSION = "downloadVersion"
   const val KEY_SERIAL_NO_TPMS = "serialNo_tpms"
+  const val SIMING_DATA_READ_ECUID_PROTOCOL_ID = "protocolId"
+  const val SIMING_DATA_TIRE_COUNT = "tireCount"
+  const val SIMING_DATA_TIRE_ID_LIST = "tireIdList"
 
 }
