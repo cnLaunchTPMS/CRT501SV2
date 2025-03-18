@@ -298,9 +298,9 @@ class LaunchUtil constructor(context: Context) {
               tempBroadcastReceiverList.remove(this)
               callback.onJsonValue(
                 JSONObject().apply {
-                  put(SIMING_DATA_TIRE_ID_LIST, intent.getStringArrayListExtra(SIMING_DATA_TIRE_ID_LIST))
                   put(SIMING_DATA_READ_ECUID_PROTOCOL_ID, intent.getStringExtra(SIMING_DATA_READ_ECUID_PROTOCOL_ID))
                   put(SIMING_DATA_TIRE_COUNT, intent.getIntExtra(SIMING_DATA_TIRE_COUNT,0))
+                  put(SIMING_DATA_TIRE_ID_LIST, intent.getStringArrayListExtra(SIMING_DATA_TIRE_ID_LIST))
                 }
               )
             }
