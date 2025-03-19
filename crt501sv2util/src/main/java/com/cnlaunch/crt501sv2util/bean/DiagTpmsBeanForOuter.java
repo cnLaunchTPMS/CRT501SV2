@@ -238,10 +238,10 @@ public class DiagTpmsBeanForOuter implements Serializable {
                 transBuilder.append("IDlen=").append(getIdLen()).append("\n");
                 transBuilder.append("FL=").append(getFl()).append("\n");
                 transBuilder.append("FR=").append(getFr()).append("\n");
-                transBuilder.append("RR_OUTER").append(getRrOuter()).append("\n");
-                transBuilder.append("RR_INNER").append(getRrInner()).append("\n");
-                transBuilder.append("RL_OUTER").append(getRlOuter()).append("\n");
-                transBuilder.append("RL_INNER").append(getRlInner()).append("\n");
+                transBuilder.append("RR_OUTER=").append(getRrOuter()).append("\n");
+                transBuilder.append("RR_INNER=").append(getRrInner()).append("\n");
+                transBuilder.append("RL_OUTER=").append(getRlOuter()).append("\n");
+                transBuilder.append("RL_INNER=").append(getRlInner()).append("\n");
                 break;
 
             default:checkIsNullOrEmpty("");
