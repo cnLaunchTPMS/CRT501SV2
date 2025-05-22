@@ -465,47 +465,65 @@ class LaunchUtil constructor(context: Context) {
   fun startListenObdState(launchCallback: LaunchCallback?) {
     logInner("开始监听OBD")
 
-
-    // 请求取消
     obdJob?.cancel()
-
-    // 确保旧任务完成
-    obdJob?.let { runBlocking { it.join() } }
+    obdJob?.invokeOnCompletion {
+      logInner("旧监听任务已完成")
+    }
 
     obdJob = scopeInner.launch(Dispatchers.IO) {
       var currentIsConnected = false
       while (isActive) {
+        try {
+          ensureActive()
 
-        // 确保协程可被取消
-        ensureActive()
-
-        val voltageString = ComUtils.getObdVoltage()
-        var isConnected: Boolean = false
-
-        val originVoltage = voltageString.toFloatOrNull()?.let { it * 18 / 1024 + 1.7f } ?: continue
-        val voltage = originVoltage + (originVoltage - 8) * 0.15f
-        isConnected = originVoltage > 8
-        launchCallback?.onFloatValue(voltage)
-
-        if (currentIsConnected != isConnected) {
-          logInner("OBD状态变化：$isConnected")
-          currentIsConnected = isConnected
-          playSound(if (isConnected) SOUND_REPEAT_TIMES_8 else SOUND_REPEAT_TIMES_2)
-          withContext(Dispatchers.Main) {
-            launchCallback?.onBooleanValue(isConnected)
-            mContext.sendBroadcast(
-              Intent(ACTION_OBD_CONNECTED).apply {
-                component = ComponentName(MAIN_APP_PROCESS_NAME, MAIN_APP_RECEIVER_NAME)
-                putExtra(BUNDLE_EXTRA_DATA_KEY, isConnected)
-              }
-            )
+          val voltageString = ComUtils.getObdVoltage()
+          val rawVoltage = voltageString.toFloatOrNull()
+          if (rawVoltage == null) {
+            logInner("非法电压值: $voltageString")
+            delay(1000L)
+            continue
           }
+
+          val originVoltage = rawVoltage * 18 / 1024 + 1.7f
+          val voltage = originVoltage + (originVoltage - 8) * 0.15f
+          val isConnected = originVoltage > 8
+
+          launchCallback?.onFloatValue(voltage)
+
+          if (currentIsConnected != isConnected) {
+            currentIsConnected = isConnected
+            playSound(if (isConnected) SOUND_REPEAT_TIMES_8 else SOUND_REPEAT_TIMES_2)
+            withContext(Dispatchers.Main) {
+              launchCallback?.onBooleanValue(isConnected)
+            }
+          }
+
+
+
+          withContext(Dispatchers.Main) {
+            try {
+              mContext.sendBroadcast(
+                Intent(ACTION_OBD_CONNECTED).apply {
+                  putExtra(BUNDLE_EXTRA_DATA_KEY, isConnected)
+                }
+              )
+            } catch (e: Exception) {
+              logInner("广播发送失败：${e.message}")
+            }
+          }
+
+        } catch (e: Exception) {
+          logInner("OBD监听异常：${e.message}")
         }
 
         delay(1000L)
       }
+
+      logInner("OBD监听已中断")
+      launchCallback?.onBooleanValue(currentIsConnected)
     }
   }
+
 
 
 
