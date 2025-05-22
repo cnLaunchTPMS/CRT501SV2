@@ -486,7 +486,7 @@ class LaunchUtil constructor(context: Context) {
 
           val originVoltage = rawVoltage * 18 / 1024 + 1.7f
           val voltage = originVoltage + (originVoltage - 8) * 0.15f
-          val isConnected = originVoltage > 8
+          val isConnected = originVoltage > 6.5
 
           launchCallback?.onFloatValue(voltage)
 
