@@ -172,11 +172,11 @@ class LaunchUtil constructor(context: Context) {
     initFilter.addAction(ACTION_TPMS_INIT_RESULT)
     val initResultBR = object : BroadcastReceiver() {
       override fun onReceive(context: Context, intent: Intent) {
+
         if (ACTION_TPMS_INIT_RESULT == intent.action) {
           mContext.unregisterReceiver(this)
           tempBroadcastReceiverList.remove(this)
         }
-
 
         val tpmsInitBean = TpmsInitBean(
           intent.getBooleanExtra(KEY_INIT_RESULT, false),
@@ -488,7 +488,9 @@ class LaunchUtil constructor(context: Context) {
           val voltage = originVoltage + (originVoltage - 8) * 0.15f
           val isConnected = originVoltage > 6.5
 
-          launchCallback?.onFloatValue(voltage)
+          withContext(Dispatchers.Main) {
+            launchCallback?.onFloatValue(voltage)
+          }
 
           if (currentIsConnected != isConnected) {
             currentIsConnected = isConnected
@@ -504,6 +506,7 @@ class LaunchUtil constructor(context: Context) {
             try {
               mContext.sendBroadcast(
                 Intent(ACTION_OBD_CONNECTED).apply {
+                  setPackage(MAIN_APP_PROCESS_NAME)
                   putExtra(BUNDLE_EXTRA_DATA_KEY, isConnected)
                 }
               )
