@@ -56,17 +56,18 @@ class Et3550BleApiProvider(private val activity: FragmentActivity) {
   }
 
   private fun checkPermission(): Boolean {
-
     val mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
     if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled) {
       return false
     }
-
-    return getPermissionList().all {
-      return ContextCompat.checkSelfPermission(activity, it) ==
-          PackageManager.PERMISSION_GRANTED
+    getPermissionList().forEach{
+      if (ContextCompat.checkSelfPermission(activity, it) !=
+          PackageManager.PERMISSION_GRANTED){
+        return false
+      }
     }
 
+    return true
 
   }
 
@@ -78,6 +79,7 @@ class Et3550BleApiProvider(private val activity: FragmentActivity) {
   fun startScan(callback: Et3550BleViewModel.Et3550BleScanCallback) {
     if (!checkPermission()) {
       callback.onError("please check bluetooth enable and permissions have be granted :" + getPermissionList().toString())
+      return
     }
     bleViewModel.startBleScan(DEVICE_NAME_PREFIX, callback)
   }
@@ -91,6 +93,7 @@ class Et3550BleApiProvider(private val activity: FragmentActivity) {
   fun startConnect(bleDevice: BleDevice, callback: Et3550BleViewModel.Et3550BleConnectCallback) {
     if (!checkPermission()) {
       callback.onError("please check bluetooth enable and permissions have be granted :" + getPermissionList().toString())
+      return
     }
     bleViewModel.startBleConnect(
       bleDevice.bleAddress,
@@ -112,6 +115,7 @@ class Et3550BleApiProvider(private val activity: FragmentActivity) {
   ) {
     if (!checkPermission()) {
       callback.onError("please check bluetooth enable and permissions have be granted :" + getPermissionList().toString())
+      return
     }
     bleViewModel.startBleScanConnectBySn(sn,macNo, DEVICE_NAME_PREFIX, callback)
   }
