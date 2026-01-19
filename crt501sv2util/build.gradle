@@ -9,10 +9,16 @@ android {
     compileSdk 33
 
     defaultConfig {
-        minSdk 26
+        minSdk 23
         targetSdk 33
 
         consumerProguardFiles "consumer-rules.pro"
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs = ['src/main/java']
+        }
     }
 
     buildTypes {
