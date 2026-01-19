@@ -1,7 +1,4 @@
-// IAidlForOuter.aidl
 package com.cnlaunch.outer;
-
-// Declare any non-default types here with import statements
 
 import com.cnlaunch.outer.IAidlForOuterCallback;
 

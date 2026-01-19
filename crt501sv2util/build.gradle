@@ -21,6 +21,10 @@ android {
         }
     }
 
+    buildFeatures {
+        aidl = true
+    }
+
     buildTypes {
         release {
             minifyEnabled false
