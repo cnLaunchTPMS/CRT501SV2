@@ -65,9 +65,9 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
   }
 
 
- fun initConfig(context : Context){
-   BleInstance.initConfig(context,"","");
- }
+  internal fun initConfig(context: Context) {
+    BleInstance.initConfig(context, "", "");
+  }
 
   
   /**
@@ -363,12 +363,18 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
   }
 
 
-  override fun onCleared() {
-    super.onCleared()
+  internal fun releaseBle() {
     BleInstance.stopScanOut()
+    BleInstance.disconnect()
+    BleInstance.releaseBle()
     BleInstance.unRegisterListener(tagForScan)
     BleInstance.unRegisterListener(tagForMix)
     BleInstance.unRegisterListener(tagForConnect)
+  }
+
+  override fun onCleared() {
+    super.onCleared()
+    releaseBle()
   }
   
 }

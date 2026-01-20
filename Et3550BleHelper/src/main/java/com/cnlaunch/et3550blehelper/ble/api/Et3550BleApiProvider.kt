@@ -3,17 +3,19 @@
 package com.cnlaunch.et3550blehelper.ble.api
 
 import android.Manifest
+import android.app.Application
 import android.bluetooth.BluetoothAdapter
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
 import cn.com.heaton.blelibrary.ble.model.BleDevice
 import kotlinx.coroutines.DelicateCoroutinesApi
+import java.lang.ref.WeakReference
 
 
-class Et3550BleApiProvider(private val activity: FragmentActivity) {
+class Et3550BleApiProvider() {
 
 
   companion object{
@@ -22,13 +24,10 @@ class Et3550BleApiProvider(private val activity: FragmentActivity) {
   }
 
   private val bleViewModel by lazy {
-    val vm = ViewModelProvider(activity)[Et3550BleViewModel::class.java].apply {
-      initConfig(activity)
-    }
-    activity.lifecycle.addObserver(vm)
-    return@lazy vm
+    Et3550BleViewModel()
   }
 
+  private var applicationWeakReference: WeakReference<Context>? = null
 
   /**
    * 获取所需权限列表
@@ -57,18 +56,29 @@ class Et3550BleApiProvider(private val activity: FragmentActivity) {
 
   private fun checkPermission(): Boolean {
     val mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-    if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled) {
+    if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled || applicationWeakReference?.get() == null) {
       return false
     }
-    getPermissionList().forEach{
-      if (ContextCompat.checkSelfPermission(activity, it) !=
+    applicationWeakReference?.get()?.let {context ->
+      getPermissionList().forEach{
+        if (ContextCompat.checkSelfPermission(context, it) !=
           PackageManager.PERMISSION_GRANTED){
-        return false
+          return false
+        }
       }
     }
 
     return true
 
+  }
+
+
+  fun initBle(application: Application){
+    bleViewModel.initConfig(application)
+  }
+
+  fun releaseBle(){
+    bleViewModel.releaseBle()
   }
 
 
@@ -78,7 +88,7 @@ class Et3550BleApiProvider(private val activity: FragmentActivity) {
    */
   fun startScan(callback: Et3550BleViewModel.Et3550BleScanCallback) {
     if (!checkPermission()) {
-      callback.onError("please check bluetooth enable and permissions have be granted :" + getPermissionList().toString())
+      callback.onError("please init and  check bluetooth enable and permissions have be granted :" + getPermissionList().toString())
       return
     }
     bleViewModel.startBleScan(DEVICE_NAME_PREFIX, callback)
