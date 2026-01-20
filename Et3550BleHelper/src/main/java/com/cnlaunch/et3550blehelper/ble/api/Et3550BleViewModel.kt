@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
@@ -370,6 +371,7 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
     BleInstance.unRegisterListener(tagForScan)
     BleInstance.unRegisterListener(tagForMix)
     BleInstance.unRegisterListener(tagForConnect)
+    scopeInner.cancel()
   }
 
   override fun onCleared() {
