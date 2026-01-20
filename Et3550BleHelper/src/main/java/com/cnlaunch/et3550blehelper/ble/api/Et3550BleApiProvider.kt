@@ -74,6 +74,7 @@ class Et3550BleApiProvider() {
 
 
   fun initBle(application: Application){
+    applicationWeakReference = WeakReference(application)
     bleViewModel.initConfig(application)
   }
 
@@ -130,6 +131,10 @@ class Et3550BleApiProvider() {
     bleViewModel.startBleScanConnectBySn(sn,macNo, DEVICE_NAME_PREFIX, callback)
   }
 
+
+  fun stopScan() {
+    bleViewModel.stopScan()
+  }
 
 
   /**

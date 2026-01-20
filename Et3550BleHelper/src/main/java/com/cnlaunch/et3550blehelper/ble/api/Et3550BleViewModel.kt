@@ -364,6 +364,11 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
   }
 
 
+  internal fun stopScan() {
+    BleInstance.stopScanOut()
+  }
+
+
   internal fun releaseBle() {
     BleInstance.stopScanOut()
     BleInstance.disconnect()
