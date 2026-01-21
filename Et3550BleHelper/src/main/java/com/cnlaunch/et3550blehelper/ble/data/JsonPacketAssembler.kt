@@ -77,6 +77,8 @@ class JsonPacketAssembler(
       } finally {
         reset()
       }
+    } else {
+
     }
   }
 

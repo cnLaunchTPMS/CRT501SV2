@@ -1,15 +1,19 @@
 package com.cnlaunch.et3550blehelper.ble.api
 
 
+import android.bluetooth.BluetoothGattCharacteristic
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.ViewModel
+import cn.com.heaton.blelibrary.ble.callback.BleReadCallback
 import cn.com.heaton.blelibrary.ble.model.BleDevice
+import com.cnlaunch.et3550blehelper.ble.core.BleCore
 import com.cnlaunch.et3550blehelper.ble.tools.BleToolsLog
 import com.cnlaunch.et3550blehelper.ble.core.BleInstance
 import com.cnlaunch.et3550blehelper.ble.data.JsonPacketAssembler
 import com.cnlaunch.et3550blehelper.ble.data.JsonPacketAssembler.Companion.generatePackets
+import com.cnlaunch.et3550blehelper.ble.tools.BleTools
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +22,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
+import java.util.UUID
 
 
 @DelicateCoroutinesApi
@@ -66,8 +71,8 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
   }
 
 
-  internal fun initConfig(context: Context) {
-    BleInstance.initConfig(context, "", "");
+  internal fun initConfig(context: Context,uuidMainServiceString : String) {
+    BleInstance.initConfig(context, uuidMainServiceString, "","");
   }
 
   
@@ -197,6 +202,26 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
 
 
   /**
+   * 写入数据
+   * @param data 数据
+   * @param callback 回调
+   */
+  internal fun writeDataDirectly(
+    characteristicUUID: EnumEt3550UUID,
+    data: ByteArray,
+    callback: Et3550BleWriteCallback
+  ) {
+    scopeInner.launch (Dispatchers.IO) {
+      callback.onLoadingStatusChanged(true)
+      BleInstance.writeByUUID(this@Et3550BleViewModel.mainUUID,characteristicUUID.value,data) { success ->
+        callback.onLoadingStatusChanged(success)
+        callback.onWriteResult(success,"")
+      }
+    }
+  }
+
+
+  /**
    * 写入蓝牙数据（自动分包、顺序写、汇总结果）
    * @param json JSON字符串
    * @param callback 回调
@@ -252,24 +277,72 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
             if (success) {
               scopeInner.launch(Dispatchers.IO) {
                 delay(1000)
-                BleInstance.readJsonByUUID(
-                  mainUUID,
-                  characteristicUUID.value,
-                  object : JsonPacketAssembler.AssemblerCallback {
-                    override fun onComplete(json: String) {
+
+
+
+                val finished = java.util.concurrent.atomic.AtomicBoolean(false)
+
+                val assembler = JsonPacketAssembler(object : JsonPacketAssembler.AssemblerCallback {
+                  override fun onComplete(json: String) {
+                    if (finished.compareAndSet(false, true)) {
                       scopeInner.launch(Dispatchers.Main) {
                         callback.onLoadingStatusChanged(false)
                         callback.onReadResult(true, json, "")
                       }
                     }
+                  }
 
-                    override fun onError(error: String) {
+                  override fun onError(error: String) {
+                    if (finished.compareAndSet(false, true)) {
                       scopeInner.launch(Dispatchers.Main) {
-                        callback.onReadResult(false, "", error)
                         callback.onLoadingStatusChanged(false)
+                        callback.onReadResult(false, "", error)
                       }
                     }
-                  })
+                  }
+                })
+
+                scopeInner.launch(Dispatchers.IO) {
+                  // 最多防御性读取 300 次 30000 ms，避免死循环
+                  repeat(300) {
+                    if (finished.get()) {
+                      return@launch
+                    }
+
+                    BleToolsLog.e(TAG, "读取未完成，继续读取... 第${it + 1}包")
+
+                    BleInstance.readJsonByUUID(
+                      mainUUID,
+                      characteristicUUID.value
+                    ){ success, data ->
+                      if (success && data.isNotEmpty()) {
+                        assembler.accept(data)
+                      }else if (!success){
+                        BleToolsLog.e(TAG, "readJsonByUUID read failed")
+                        if (finished.compareAndSet(false, true)) {
+                          scopeInner.launch(Dispatchers.Main) {
+                            callback.onLoadingStatusChanged(false)
+                            callback.onReadResult(false, "", "read json failed")
+                          }
+                        }
+                        this.cancel()
+                      }
+                    }
+
+                    delay(100)
+                  }
+
+                  // 超时仍未完成
+                  if (finished.compareAndSet(false, true)) {
+                    scopeInner.launch(Dispatchers.Main) {
+                      callback.onLoadingStatusChanged(false)
+                      callback.onReadResult(false, "", "read json timeout")
+                    }
+                  }
+                }
+
+
+
               }
             }else{
               scopeInner.launch(Dispatchers.Main) {
@@ -282,6 +355,7 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
       )
     }
   }
+
 
 
 

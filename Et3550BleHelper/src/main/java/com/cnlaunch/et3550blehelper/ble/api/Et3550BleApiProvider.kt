@@ -75,8 +75,9 @@ class Et3550BleApiProvider() {
 
   fun initBle(application: Application){
     applicationWeakReference = WeakReference(application)
-    bleViewModel.initConfig(application)
+    bleViewModel.initConfig(application,EnumEt3550UUID.UUID_PRIMARY_SERVICE.value)
   }
+
 
   fun releaseBle(){
     bleViewModel.releaseBle()
@@ -149,6 +150,22 @@ class Et3550BleApiProvider() {
     callback: Et3550BleViewModel.Et3550BleWriteCallback
   ) {
     bleViewModel.writeJsonData(enumEt3550UUID, jsonString, callback)
+  }
+
+
+
+  /**
+   * 直接写入数据
+   * @param enumEt3550UUID uuid
+   * @param data 数据
+   * @param callback 回调
+   */
+  fun writeDataWithoutWrapper(
+    enumEt3550UUID: EnumEt3550UUID,
+    data: ByteArray,
+    callback: Et3550BleViewModel.Et3550BleWriteCallback
+  ) {
+    bleViewModel.writeDataDirectly(enumEt3550UUID, data, callback)
   }
 
 

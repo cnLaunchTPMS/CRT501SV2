@@ -3,6 +3,8 @@ package com.cnlaunch.et3550blehelper.ble.core
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattDescriptor
+import android.bluetooth.BluetoothGattService
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -15,9 +17,7 @@ import cn.com.heaton.blelibrary.ble.callback.BleNotifyCallback
 import cn.com.heaton.blelibrary.ble.callback.BleReadCallback
 import cn.com.heaton.blelibrary.ble.callback.BleScanCallback
 import cn.com.heaton.blelibrary.ble.callback.BleWriteCallback
-import cn.com.heaton.blelibrary.ble.callback.BleWriteEntityCallback
 import cn.com.heaton.blelibrary.ble.model.BleDevice
-import cn.com.heaton.blelibrary.ble.model.EntityData
 import com.cnlaunch.et3550blehelper.ble.tools.BleTools
 import com.cnlaunch.et3550blehelper.ble.tools.BleTools.bytesToHexString
 import com.cnlaunch.et3550blehelper.ble.tools.BleToolsLog
@@ -43,6 +43,7 @@ open class BleCore {
 
     //蓝牙连接重试次数
     private const val BLE_RECONNECT_COUNT = 3
+
 
 
     //MTU
@@ -290,7 +291,6 @@ open class BleCore {
     currentPinPassword = pin
 
     registerGlobalPairingReceiver(Ble.getInstance<BleDevice>().context)
-
     instance.connect(macNo, object : BleConnectCallback<BleDevice>() {
       override fun onReady(device: BleDevice?) {
         super.onReady(device)
@@ -338,13 +338,10 @@ open class BleCore {
                 BLE_MTU = mtu - 10
               }
 
-              callback.connected(it)
-              unregisterGlobalPairingReceiver(Ble.getInstance<BleDevice>().context)
+              switchNotify(it, true, callback) {
+                callback.connected(it)
+              }
 
-//              switchNotify(it, true, callback) {
-//                callback.connected(it)
-//                unregisterGlobalPairingReceiver(Ble.getInstance<BleDevice>().context)
-//              }
             }
           })
         }
@@ -358,6 +355,8 @@ open class BleCore {
           unregisterGlobalPairingReceiver(Ble.getInstance<BleDevice>().context)
         }
       }
+
+
 
 
     })
@@ -376,10 +375,14 @@ open class BleCore {
     notifySuccessListener: () -> Unit
   ) {
     BleToolsLog.d(TAG, "使能通知 ${device.bleName}")
-    instance.enableNotify(device, isOpen, object : BleNotifyCallback<BleDevice>() {
+    instance.enableNotify(device,isOpen,object : BleNotifyCallback<BleDevice>() {
+
+
       override fun onChanged(device: BleDevice, characteristic: BluetoothGattCharacteristic) {
         characteristic.value?.let {
+
           BleToolsLog.d(TAG, "Notify Changed")
+          BleToolsLog.d(TAG, "Notify Changed data: ${bytesToHexString(it)}")
           callback.onCallBack(it)
         }
       }
@@ -458,6 +461,8 @@ open class BleCore {
   }
 
 
+
+
   /**
    * 写
    * @param deviceIn BleDevice
@@ -479,10 +484,7 @@ open class BleCore {
             if (byteArray.contentEquals(characteristic?.value)) {
               writeCallBack.onCallBack(true)
             }
-            BleToolsLog.d(
-              TAG,
-              "Write Success  ${device.bleName}   ${bytesToHexString(characteristic?.value)}"
-            )
+            BleToolsLog.d(TAG, "Write Success  ${device.bleName}   ${bytesToHexString(characteristic?.value)}")
           }
 
         }
@@ -516,6 +518,7 @@ open class BleCore {
       writeCallBack.onCallBack(false)
     }
   }
+
 
 
   protected fun release() {

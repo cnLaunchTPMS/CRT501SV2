@@ -206,19 +206,13 @@ object BleInstance : BleCore() {
   fun readJsonByUUID(
     mainServiceUUID: String,
     readChaUUID: String,
-    assemblerCallback: JsonPacketAssembler.AssemblerCallback,
+    callBack: (Boolean,ByteArray) -> Unit
   ) {
-    val assembler = JsonPacketAssembler(assemblerCallback)
+
 
     bleDeviceWeakReference.get()?.let { device ->
-      super.bleRead(mainServiceUUID, readChaUUID, device) { success, data ->
-        if (!success) {
-          assemblerCallback.onError("BLE read failed")
-          return@bleRead
-        }
-        assembler.accept(data)
-      }
-    } ?: assemblerCallback.onError("Device not connected")
+      super.bleRead(mainServiceUUID, readChaUUID, device,callBack)
+    } ?: callBack.invoke(false, ByteArray(0))
   }
 
 
