@@ -97,6 +97,12 @@ class Et3550BleApiProvider() {
   }
 
 
+
+  fun checkIsConnected(macNo: String){
+    bleViewModel.checkIsConnected(macNo)
+  }
+
+
   /**
    * 开始链接
    * @param bleDevice 蓝牙类

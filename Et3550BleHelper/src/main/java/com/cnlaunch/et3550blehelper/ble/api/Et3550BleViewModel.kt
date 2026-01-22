@@ -57,6 +57,7 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
   interface Et3550BleConnectCallback{
     fun onLoadingStatusChanged(isLoading: Boolean)
     fun onConnectStatusChanged(isConnected: Boolean)
+    fun onNotifyData(data: ByteArray)
     fun onError(msg: String)
   }
 
@@ -75,7 +76,12 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
     BleInstance.initConfig(context, uuidMainServiceString, "","");
   }
 
-  
+
+  internal fun checkIsConnected(mac: String): Boolean {
+    return BleInstance.checkIsConnected(mac)
+  }
+
+
   /**
    * 蓝牙扫描
    */
@@ -124,6 +130,16 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
         }
       }
 
+      override fun onData(data: ByteArray?) {
+        super.onData(data)
+        scopeInner.launch(Dispatchers.Main) {
+          if (data != null) {
+            callback.onNotifyData(data)
+          }
+        }
+      }
+
+
       override fun onConnected(device: BleDevice) {
         super.onConnected(device)
         scopeInner.launch(Dispatchers.Main) {
@@ -167,6 +183,15 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
             bleDeviceBean.bleAddress,
             bleDeviceBean.bleName.replace(prefixName, ""),
           )
+        }
+      }
+
+      override fun onData(data: ByteArray?) {
+        super.onData(data)
+        scopeInner.launch(Dispatchers.Main) {
+          if (data != null) {
+            callback.onNotifyData(data)
+          }
         }
       }
 

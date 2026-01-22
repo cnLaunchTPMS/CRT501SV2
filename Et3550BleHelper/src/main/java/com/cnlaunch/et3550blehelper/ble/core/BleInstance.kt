@@ -49,8 +49,10 @@ object BleInstance : BleCore() {
   /**
    * 是否已连接
    */
-  fun checkIsConnected(): Boolean {
-    return bleDeviceWeakReference.get()?.isConnected ?: false
+  fun checkIsConnected(macNo: String): Boolean {
+    return bleDeviceWeakReference.get()?.let {
+      it.isConnected && it.bleAddress?.equals(macNo, true) == true
+    } ?: false
   }
 
 
