@@ -354,7 +354,7 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
                       }
                     }
 
-                    delay(100)
+                    delay(150)
                   }
 
                   // 超时仍未完成
@@ -467,10 +467,12 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
     BleInstance.stopScanOut()
   }
 
+  internal fun disconnect(device: BleDevice) {
+    BleInstance.disconnectDevice(device)
+  }
+
 
   internal fun releaseBle() {
-    BleInstance.stopScanOut()
-    BleInstance.disconnect()
     BleInstance.releaseBle()
     BleInstance.unRegisterListener(tagForScan)
     BleInstance.unRegisterListener(tagForMix)
@@ -478,9 +480,5 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
     scopeInner.cancel()
   }
 
-  override fun onCleared() {
-    super.onCleared()
-    releaseBle()
-  }
-  
+
 }

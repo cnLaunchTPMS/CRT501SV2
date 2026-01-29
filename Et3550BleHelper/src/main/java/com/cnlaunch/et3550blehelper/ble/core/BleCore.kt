@@ -520,11 +520,28 @@ open class BleCore {
   }
 
 
+  protected fun disconnect(device: BleDevice) {
+    BleToolsLog.d(TAG, "断开连接")
+    kotlin.runCatching {
+      instance.disconnect(device)
+    }.onFailure {
+      BleToolsLog.e(TAG, "断开连接异常： ${it.message}")
+    }
+
+  }
 
   protected fun release() {
-    currentPinPassword = ""
-    instance.context?.unregisterReceiver(pairingReceiver)
-    instance.released()
+    BleToolsLog.d(TAG, "释放")
+    kotlin.runCatching {
+      currentPinPassword = ""
+      if (pairingReceiver != null) {
+        instance.context?.unregisterReceiver(pairingReceiver)
+      }
+      instance.released()
+    }.onFailure {
+      BleToolsLog.e(TAG, "释放异常： ${it.message}")
+    }
+
   }
 
 

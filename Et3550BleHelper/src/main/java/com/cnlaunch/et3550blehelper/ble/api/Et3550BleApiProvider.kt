@@ -98,8 +98,8 @@ class Et3550BleApiProvider() {
 
 
 
-  fun checkIsConnected(macNo: String){
-    bleViewModel.checkIsConnected(macNo)
+  fun checkIsConnected(macNo: String) : Boolean{
+    return bleViewModel.checkIsConnected(macNo)
   }
 
 

@@ -222,8 +222,8 @@ object BleInstance : BleCore() {
   /**
    * 释放资源
    */
-  fun disconnect() {
-    super.release()
+  fun disconnectDevice(device: BleDevice) {
+    super.disconnect(device)
     bleDeviceWeakReference = WeakReference(null)
   }
 
@@ -234,6 +234,9 @@ object BleInstance : BleCore() {
    * 释放资源
    */
   fun releaseBle() {
+    if (!hasInit){
+      return
+    }
     super.release()
     hasInit = false
     bleDeviceWeakReference = WeakReference(null)
