@@ -206,9 +206,14 @@ open class BleCore {
   
   fun unregisterGlobalPairingReceiver(context: Context) {
     if (pairingReceiver != null) {
-      context.unregisterReceiver(pairingReceiver)
-      pairingReceiver = null
-      BleToolsLog.d(TAG, "全局配对请求接收器已注销")
+      kotlin.runCatching {
+        context.unregisterReceiver(pairingReceiver)
+        pairingReceiver = null
+        BleToolsLog.d(TAG, "全局配对请求接收器已注销")
+      }.onFailure {
+        BleToolsLog.d(TAG, "全局配对请求接收器注销失败:"+ it.message)
+      }
+
     }
   }
 

@@ -8,10 +8,18 @@ import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import cn.com.heaton.blelibrary.ble.model.BleDevice
+import com.cnlaunch.et3550blehelper.ble.test.CarTreeSerializer
+import com.cnlaunch.et3550blehelper.ble.test.TestCarMMY
+import com.cnlaunch.testSiming.bean.CarMake
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.newSingleThreadContext
 import java.lang.ref.WeakReference
 
 
@@ -186,4 +194,28 @@ class Et3550BleApiProvider() {
   ) {
     bleViewModel.readJsonData(enumEt3550UUID,callback)
   }
+
+
+
+//  private val scopeTest: CoroutineScope by lazy {
+//    CoroutineScope(SupervisorJob() + newSingleThreadContext(Et3550BleApiProvider::class.java.simpleName))
+//  }
+
+//  fun testGetAllCar(context: Context, callback:(List<CarMake>) -> Unit){
+//    scopeTest.launch {
+//
+//      val list = TestCarMMY.loadAllCars(this@Et3550BleApiProvider)
+//
+//      // 1. 转 JSON
+//      val json = CarTreeSerializer.toJson(list)
+//
+//      // 2. 存 SD 卡
+//      val file = SdCardFileUtil.save(json)
+//
+//      Log.e("xxxxxxxxx", "保存成功: ${file.absolutePath}")
+//
+//      callback.invoke(list)
+//    }
+//  }
+
 }
