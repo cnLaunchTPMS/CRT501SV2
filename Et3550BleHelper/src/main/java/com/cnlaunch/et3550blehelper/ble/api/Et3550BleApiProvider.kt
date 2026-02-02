@@ -12,8 +12,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import cn.com.heaton.blelibrary.ble.model.BleDevice
-import com.cnlaunch.et3550blehelper.ble.test.CarTreeSerializer
-import com.cnlaunch.et3550blehelper.ble.test.TestCarMMY
+
 import com.cnlaunch.testSiming.bean.CarMake
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi

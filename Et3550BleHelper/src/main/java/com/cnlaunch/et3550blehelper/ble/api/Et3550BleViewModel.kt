@@ -13,7 +13,7 @@ import com.cnlaunch.et3550blehelper.ble.tools.BleToolsLog
 import com.cnlaunch.et3550blehelper.ble.core.BleInstance
 import com.cnlaunch.et3550blehelper.ble.data.JsonPacketAssembler
 import com.cnlaunch.et3550blehelper.ble.data.JsonPacketAssembler.Companion.generatePackets
-import com.cnlaunch.et3550blehelper.ble.test.TestCarMMY
+
 import com.cnlaunch.et3550blehelper.ble.tools.BleTools
 import com.cnlaunch.testSiming.bean.CarMake
 import kotlinx.coroutines.CoroutineScope
