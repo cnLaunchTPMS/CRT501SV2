@@ -1,21 +1,14 @@
 package com.cnlaunch.et3550blehelper.ble.api
 
 
-import android.bluetooth.BluetoothGattCharacteristic
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.ViewModel
-import cn.com.heaton.blelibrary.ble.callback.BleReadCallback
 import cn.com.heaton.blelibrary.ble.model.BleDevice
-import com.cnlaunch.et3550blehelper.ble.core.BleCore
 import com.cnlaunch.et3550blehelper.ble.tools.BleToolsLog
 import com.cnlaunch.et3550blehelper.ble.core.BleInstance
 import com.cnlaunch.et3550blehelper.ble.data.JsonPacketAssembler
 import com.cnlaunch.et3550blehelper.ble.data.JsonPacketAssembler.Companion.generatePackets
-
-import com.cnlaunch.et3550blehelper.ble.tools.BleTools
-import com.cnlaunch.testSiming.bean.CarMake
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +17,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
-import java.util.UUID
 
 
 @DelicateCoroutinesApi
@@ -481,6 +473,9 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
     BleInstance.unRegisterListener(tagForConnect)
     scopeInner.cancel()
   }
+
+
+
 
 
 }
