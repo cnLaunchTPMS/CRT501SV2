@@ -44,7 +44,7 @@ class Et3550BleApiProvider() {
       bluetoothPermissionArray.addAll(
         arrayOf(
           Manifest.permission.BLUETOOTH_SCAN,
-          Manifest.permission.BLUETOOTH_ADVERTISE,
+//          Manifest.permission.BLUETOOTH_ADVERTISE,
           Manifest.permission.BLUETOOTH_CONNECT
         )
       )
