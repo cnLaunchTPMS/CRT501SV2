@@ -281,7 +281,11 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
    * @param characteristicUUID 特征值
    * @param callback 回调
    */
-  internal fun readJsonData(characteristicUUID: EnumEt3550UUID, callback: Et3550BleReadCallback) {
+  internal fun readJsonData(
+    interval: Long,
+    characteristicUUID: EnumEt3550UUID,
+    callback: Et3550BleReadCallback
+  ) {
     scopeInner.launch(Dispatchers.IO) {
       callback.onLoadingStatusChanged(true)
       writeJsonData(
@@ -348,7 +352,7 @@ class Et3550BleViewModel : ViewModel(), DefaultLifecycleObserver {
                       }
                     }
 
-                    delay(150)
+                    delay(interval)
                   }
 
                   // 超时仍未完成

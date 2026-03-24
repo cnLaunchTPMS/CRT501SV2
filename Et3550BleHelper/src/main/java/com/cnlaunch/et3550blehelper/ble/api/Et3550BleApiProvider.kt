@@ -7,6 +7,7 @@ import android.app.Application
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.pm.PackageManager
+import android.icu.util.DateInterval
 import android.os.Build
 import androidx.core.content.ContextCompat
 import cn.com.heaton.blelibrary.ble.model.BleDevice
@@ -175,15 +176,16 @@ class Et3550BleApiProvider() {
 
 
   /**
-   * 写入数据
+   * 读取数据
    * @param enumEt3550UUID uuid
    * @param callback 回调
    */
   fun readData(
+    interval: Long,
     enumEt3550UUID: EnumEt3550UUID,
     callback: Et3550BleViewModel.Et3550BleReadCallback
   ) {
-    bleViewModel.readJsonData(enumEt3550UUID,callback)
+    bleViewModel.readJsonData(interval,enumEt3550UUID,callback)
   }
 
 
