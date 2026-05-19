@@ -541,6 +541,7 @@ open class BleCore {
       currentPinPassword = ""
       if (pairingReceiver != null) {
         instance.context?.unregisterReceiver(pairingReceiver)
+        pairingReceiver = null
       }
       instance.released()
     }.onFailure {
